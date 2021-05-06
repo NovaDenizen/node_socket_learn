@@ -25,13 +25,12 @@ app.get('/', function(req, res) {
     res.sendFile(__dirname + '/client.html');
 });
 
-// app.get('/socket.io.js', function(req, res) {
-//    res.sendFile(__dirname + '/node_modules/
 
 io.on('connection', function(socket) {
     console.log('new connection');
     socket.emit('message', 'This is a message from the dark side.');
 });
+
 
 server.listen(server_port, function() {
     console.log('server up and running at %s port', server_port);
