@@ -6,9 +6,8 @@ const https = require('https');
 var app = express();
 
 const CFG = {
-    PROXY_IPC_PATH: '/home/kbateman/hw_ipc',
     PG_IPC_PATH: '/var/run/postgresql',
-    CERT_PATH: '/home/kbateman/prog/node_socket_learn/certs',
+    CERT_PATH: __dirname + '/certs',
 }
 
 const https_options = {
