@@ -3,7 +3,7 @@ const fs = require('fs');
 const express = require('express');
 const pg = require('pg');
 const https = require('https');
-var app = express();
+const app = express();
 
 const CFG = {
     PG_IPC_PATH: '/var/run/postgresql',
@@ -16,8 +16,8 @@ const https_options = {
     cert: fs.readFileSync(CFG.CERT_PATH + '/file.crt'),
 }
 
-var server = https.createServer(https_options, app);
-var io = require('socket.io')(server);
+const server = https.createServer(https_options, app);
+const io = require('socket.io')(server);
 
 
 app.get('/', function(req, res) {
