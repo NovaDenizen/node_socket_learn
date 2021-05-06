@@ -25,10 +25,24 @@ app.get('/', function(req, res) {
     res.sendFile(__dirname + '/client.html');
 });
 
+function make_pg_client() {
+    return new pg.Client({ host: CFG.PG_IPC_PATH});
+}
 
-io.on('connection', function(socket) {
+io.on('connection', async function(socket) {
     console.log('new connection');
-    socket.emit('message', 'This is a message from the dark side.');
+    try {
+        const client = make_pg_client();
+        await client.connect();
+        const qres = await(client.query('SELECT idx, x, y from test1 order by idx desc'));
+        await client.end();
+        socket.emit('newdata', qres.rows);
+    } catch (err) {
+        console.log("caught err %s, shutting down", err);
+        server.close(() => console.log("server has shut down"));
+    } 
+    //socket.emit('message', 'This is a message from the dark side.');
+    //socket.on('disconnect', () => console.log('somebody disconnected'));
 });
 
 

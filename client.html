@@ -16,7 +16,23 @@
       socket.on('message', function(data) {
         alert(data);
       });
+      socket.on('newdata', function(data) {
+          let nd_div = document.getElementById('newdata');
+          nd_div.textContent = '';
+          for (i = 0; i < data.length; i++) {
+              let row = data[i];
+              let line = '';
+              for ([key, value] of Object.entries(row)) {
+                  line = line + ` ${key}:${value}`;
+              }
+              const node = document.createTextNode(line);
+              const p = document.createElement('p');
+              p.appendChild(node);
+              nd_div.appendChild(p);
+          }
+      });
     </script>
+    <div id="newdata">no data yet</div>
   </body>
 
 </html>
