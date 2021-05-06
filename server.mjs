@@ -29,8 +29,7 @@ function make_pg_client() {
     return new pg.Client({ host: CFG.PG_IPC_PATH});
 }
 
-io.on('connection', async function(socket) {
-    console.log('new connection');
+async function sendnewdata(socket) {
     try {
         const client = make_pg_client();
         await client.connect();
@@ -41,6 +40,14 @@ io.on('connection', async function(socket) {
         console.log("caught err %s, shutting down", err);
         server.close(() => console.log("server has shut down"));
     } 
+}
+
+io.on('connection', function(socket) {
+    console.log('new connection');
+    sendnewdata(socket);
+    socket.on('getnewdata', function() {
+        sendnewdata(socket);
+    });
     //socket.emit('message', 'This is a message from the dark side.');
     //socket.on('disconnect', () => console.log('somebody disconnected'));
 });
