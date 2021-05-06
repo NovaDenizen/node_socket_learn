@@ -8,13 +8,13 @@ var app = express();
 const CFG = {
     PG_IPC_PATH: '/var/run/postgresql',
     CERT_PATH: __dirname + '/certs',
+    SERVER_PORT: 58001,
 }
 
 const https_options = {
     key: fs.readFileSync(CFG.CERT_PATH + '/file.pem'),
     cert: fs.readFileSync(CFG.CERT_PATH + '/file.crt'),
 }
-const server_port = 58001;
 
 var server = https.createServer(https_options, app);
 var io = require('socket.io')(server);
@@ -42,17 +42,21 @@ async function sendnewdata(socket) {
 }
 
 io.on('connection', function(socket) {
-    console.log('new connection');
+    console.log(`new connection id=${socket.id}`);
     sendnewdata(socket);
     socket.on('getnewdata', function() {
+        console.log(`getnewdata from ${socket.id}`);
         sendnewdata(socket);
+    });
+    socket.on('disconnect', function() {
+        console.log(`disconnect from ${socket.id}`);
     });
     //socket.emit('message', 'This is a message from the dark side.');
     //socket.on('disconnect', () => console.log('somebody disconnected'));
 });
 
 
-server.listen(server_port, function() {
-    console.log('server up and running at %s port', server_port);
+server.listen(CFG.SERVER_PORT, function() {
+    console.log('server up and running at %s port', CFG.SERVER_PORT);
 });
 
