@@ -45,7 +45,7 @@ io.on('connection', function(socket) {
     console.log(`new connection id=${socket.id}`);
     sendnewdata(socket);
     socket.on('getnewdata', function() {
-        console.log(`getnewdata from ${socket.id}`);
+        console.log(`got getnewdata from ${socket.id}`);
         sendnewdata(socket);
     });
     socket.on('disconnect', function() {
