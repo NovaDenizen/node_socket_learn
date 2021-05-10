@@ -19,6 +19,7 @@
         alert(data);
       });
       socket.on('newdata', function(data) {
+          console.log('got newdata(%o)', data);
           let nd_div = document.getElementById('newdata');
           nd_div.textContent = '';
           for (i = 0; i < data.length; i++) {

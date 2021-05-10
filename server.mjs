@@ -24,29 +24,48 @@ app.get('/', function(req, res) {
     res.sendFile(__dirname + '/client.html');
 });
 
-function make_pg_client() {
-    return new pg.Client({ host: CFG.PG_IPC_PATH});
-}
+async function make_pg_client() {
+    const client = new pg.Client({ host: CFG.PG_IPC_PATH});
+    await client.connect();
+    return client;
+} 
 
 async function sendnewdata(socket) {
     try {
-        const client = make_pg_client();
-        await client.connect();
-        const qres = await(client.query('SELECT idx, x, y from test1 order by idx desc'));
-        await client.end();
-        socket.emit('newdata', qres.rows);
+        let rows = await basic_query('SELECT idx, x, y from test1 order by idx desc');
+        socket.emit('newdata', rows);
     } catch (err) {
-        console.log("caught err %s, shutting down", err);
-        server.close(() => console.log("server has shut down"));
-    } 
+        console.log('sendnewdata caught ' + err);
+    }
+}
+
+async function send_origins(socket) {
+    let qres = await(basic_query('select tile, description from origins'));
+    socket.emit('origins', qres.rows);
+}
+
+async function basic_query(query) {
+    var client;
+    try {
+        client = await make_pg_client();
+        const result = await client.query(query);
+        return result.rows;
+    } finally {
+        client.end();
+    }
 }
 
 io.on('connection', function(socket) {
     console.log(`new connection id=${socket.id}`);
+    socket.emit('newdata', [{ message: 'initial nondata'}]);
     sendnewdata(socket);
     socket.on('getnewdata', function() {
         console.log(`got getnewdata from ${socket.id}`);
         sendnewdata(socket);
+    });
+    socket.on('getorigins', function() {
+        console.log('got getorogins from ${socket.id}');
+        send_origins(socket);
     });
     socket.on('disconnect', function() {
         console.log(`disconnect from ${socket.id}`);
