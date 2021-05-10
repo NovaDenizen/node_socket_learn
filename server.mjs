@@ -31,17 +31,13 @@ async function make_pg_client() {
 } 
 
 async function sendnewdata(socket) {
-    try {
-        let rows = await basic_query('SELECT idx, x, y from test1 order by idx desc');
-        socket.emit('newdata', rows);
-    } catch (err) {
-        console.log('sendnewdata caught ' + err);
-    }
+    let rows = await basic_query('SELECT idx, x, y from test1 order by idx desc');
+    socket.emit('newdata', rows);
 }
 
 async function send_origins(socket) {
-    let qres = await(basic_query('select tile, description from origins'));
-    socket.emit('origins', qres.rows);
+    let rows = await basic_query('select tile, description from origins');
+    socket.emit('origins', rows);
 }
 
 async function basic_query(query) {
@@ -57,7 +53,6 @@ async function basic_query(query) {
 
 io.on('connection', function(socket) {
     console.log(`new connection id=${socket.id}`);
-    socket.emit('newdata', [{ message: 'initial nondata'}]);
     sendnewdata(socket);
     socket.on('getnewdata', function() {
         console.log(`got getnewdata from ${socket.id}`);
