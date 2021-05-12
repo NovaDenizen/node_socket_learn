@@ -13,8 +13,8 @@ const CFG = {
 }
 
 const https_options = {
-    key: fs.readFileSync(CFG.CERT_PATH + '/file.pem'),
-    cert: fs.readFileSync(CFG.CERT_PATH + '/file.crt'),
+    key: fs.readFileSync(path.join(CFG.CERT_PATH, 'file.pem')),
+    cert: fs.readFileSync(path.join(CFG.CERT_PATH, '/file.crt')),
 }
 
 const server = https.createServer(https_options, app);
@@ -23,7 +23,7 @@ const io = require('socket.io')(server);
 app.use('/modules', express.static(path.join(__dirname, 'modules')))
 
 app.get('/', function(req, res) {
-    res.sendFile(__dirname + '/client.html');
+    res.sendFile(path.join(__dirname, '/client.html'));
 });
 
 async function make_pg_client() {
