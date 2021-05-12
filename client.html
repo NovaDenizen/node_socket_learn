@@ -11,7 +11,8 @@
     <div id="newdata">no data yet</div>
     <script src="socket.io/socket.io.js"></script>
 
-    <script>
+    <script type="module">
+      //import * as hyp from "hyperbolic";
       var URL_SERVER = 'https://www.cymbym.com:58001';
       var socket = io.connect(URL_SERVER);
 
@@ -22,10 +23,10 @@
           console.log('got newdata(%o)', data);
           let nd_div = document.getElementById('newdata');
           nd_div.textContent = '';
-          for (i = 0; i < data.length; i++) {
+          for (let i = 0; i < data.length; i++) {
               let row = data[i];
               let line = '';
-              for ([key, value] of Object.entries(row)) {
+              for (let [key, value] of Object.entries(row)) {
                   line = line + ` ${key}:${value}`;
               }
               const node = document.createTextNode(line);
