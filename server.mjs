@@ -4,6 +4,7 @@ const express = require('express');
 const pg = require('pg');
 const https = require('https');
 const app = express();
+const path = require('path');
 
 const CFG = {
     PG_IPC_PATH: '/var/run/postgresql',
@@ -19,6 +20,7 @@ const https_options = {
 const server = https.createServer(https_options, app);
 const io = require('socket.io')(server);
 
+app.use('/modules', express.static(path.join(__dirname, 'modules')))
 
 app.get('/', function(req, res) {
     res.sendFile(__dirname + '/client.html');
