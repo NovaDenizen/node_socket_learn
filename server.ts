@@ -2,13 +2,12 @@
 import * as fs from 'fs';
 import express from 'express';
 import { Application, Request, Response } from 'express';
-import socket_io from 'socket.io';
-import { Socket } from 'socket.io';
+import socket_io = require('socket.io');
 import * as pg from 'pg';
+import https from 'https';
+import path from 'path';
 
-const https = require('https');
 const app = express();
-const path = require('path');
 
 const cwd = process.cwd();
 
@@ -18,13 +17,13 @@ const CFG = {
     SERVER_PORT: 58001,
 }
 
-const https_options = {
+const httpsOptions = {
     key: fs.readFileSync(path.join(CFG.CERT_PATH, 'file.pem')),
     cert: fs.readFileSync(path.join(CFG.CERT_PATH, '/file.crt')),
 }
 
-const server = https.createServer(https_options, app);
-const io = require('socket.io')(server);
+const server = https.createServer(httpsOptions, app);
+const io = new socket_io.Server(server);
 
 app.use('/modules', express.static(path.join(cwd, 'modules')))
 
@@ -38,12 +37,12 @@ async function make_pg_client() {
     return client;
 } 
 
-async function sendnewdata(socket: Socket) {
+async function sendnewdata(socket: socket_io.Socket) {
     let rows = await basic_query('SELECT idx, x, y from test1 order by idx desc');
     socket.emit('newdata', rows);
 }
 
-async function send_origins(socket: Socket) {
+async function send_origins(socket: socket_io.Socket) {
     let rows = await basic_query('select tile, description from origins');
     socket.emit('origins', rows);
 }
@@ -61,7 +60,7 @@ async function basic_query(query: string): Promise<Array<any>> {
     }
 }
 
-io.on('connection', function(socket: Socket) {
+io.on('connection', function(socket: socket_io.Socket) {
     console.log(`new connection id=${socket.id}`);
     sendnewdata(socket);
     socket.on('getnewdata', function() {
