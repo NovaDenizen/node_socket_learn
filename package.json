@@ -12,5 +12,9 @@
         "@types/node": "^15.3.0",
         "@types/pg": "^7.14.11",
         "nodemon": "^2.0.7"
+    },
+    "nodemonConfig": {
+        "ignore": "dist",
+        "ext": "js,ts,mjs"
     }
 }
