@@ -1,7 +1,6 @@
 
 import * as fs from 'fs';
-import express from 'express';
-import { Application, Request, Response } from 'express';
+import express = require('express');
 import socket_io = require('socket.io');
 import * as pg from 'pg';
 import https from 'https';
@@ -31,7 +30,7 @@ app.get('/', (req: express.Request, res: express.Response) => {
     res.sendFile(path.join(cwd, '/client.html'));
 });
 
-async function make_pg_client() {
+async function make_pg_client(): Promise<pg.Client>{
     const client = new pg.Client({ host: CFG.PG_IPC_PATH});
     await client.connect();
     return client;
