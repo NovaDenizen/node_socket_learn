@@ -27,7 +27,7 @@ const io = new socket_io.Server(server);
 
 app.use('/modules', express.static(path.join(cwd, 'modules')))
 
-app.get('/', function(req: express.Request, res: express.Response) {
+app.get('/', (req: express.Request, res: express.Response) => {
     res.sendFile(path.join(cwd, '/client.html'));
 });
 
@@ -35,20 +35,20 @@ async function make_pg_client() {
     const client = new pg.Client({ host: CFG.PG_IPC_PATH});
     await client.connect();
     return client;
-} 
+}
 
 async function sendnewdata(socket: socket_io.Socket) {
-    let rows = await basic_query('SELECT idx, x, y from test1 order by idx desc');
+    const rows = await basic_query('SELECT idx, x, y from test1 order by idx desc');
     socket.emit('newdata', rows);
 }
 
 async function send_origins(socket: socket_io.Socket) {
-    let rows = await basic_query('select tile, description from origins');
+    const rows = await basic_query('select tile, description from origins');
     socket.emit('origins', rows);
 }
 
-async function basic_query(query: string): Promise<Array<any>> {
-    var client;
+async function basic_query(query: string): Promise<any[]> {
+    let client;
     try {
         client = await make_pg_client();
         const result: pg.QueryResult = await client.query(query);
@@ -60,26 +60,24 @@ async function basic_query(query: string): Promise<Array<any>> {
     }
 }
 
-io.on('connection', function(socket: socket_io.Socket) {
+io.on('connection', (socket: socket_io.Socket) => {
     console.log(`new connection id=${socket.id}`);
     sendnewdata(socket);
-    socket.on('getnewdata', function() {
+    socket.on('getnewdata', () => {
         console.log(`got getnewdata from ${socket.id}`);
         sendnewdata(socket);
     });
-    socket.on('getorigins', function() {
+    socket.on('getorigins', () => {
         console.log('got getorogins from ${socket.id}');
         send_origins(socket);
     });
-    socket.on('disconnect', function() {
+    socket.on('disconnect', () => {
         console.log(`disconnect from ${socket.id}`);
     });
-    //socket.emit('message', 'This is a message from the dark side.');
-    //socket.on('disconnect', () => console.log('somebody disconnected'));
 });
 
 
-server.listen(CFG.SERVER_PORT, function() {
+server.listen(CFG.SERVER_PORT, () => {
     console.log('server up and running at %s port', CFG.SERVER_PORT);
 });
 
