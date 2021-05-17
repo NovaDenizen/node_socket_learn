@@ -1,5 +1,5 @@
 
-console.log('hyperbolic.js loaded');
+console.log('index.ts loaded');
 
 export class Point {
     reference?: Point;
@@ -18,5 +18,5 @@ export class Point {
 
 
 export function nothing() {
-    console.log('hyperbolic.nothing()');
+    console.log('iindex.nothing()');
 }
