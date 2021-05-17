@@ -8,33 +8,42 @@ import path from 'path';
 
 const app = express();
 
-const cwd = process.cwd();
-function fromdev(dir: string): string {
-    return path.join(cwd, dir);
-}
+const cfg = new (class CFG {
+    CWD: string;
+    PG_IPC_PATH: string;
+    SERVER_PORT: number;
+    constructor() {
+        this.CWD = process.cwd();
+        this.PG_IPC_PATH = '/var/run/postgresql';
+        this.SERVER_PORT = 58001;
+        Object.seal(this);
+    }
+    get CERT_PATH(): string {
+        return this.fromDev('certs');
+    }
+    fromDev(dir: string): string {
+        return path.join(this.CWD, dir);
+    }
+    httpsOptions(): object {
+        return {
+            key: fs.readFileSync(path.join(this.CERT_PATH, 'file.pem')),
+            cert: fs.readFileSync(path.join(this.CERT_PATH, 'file.crt')),
+        };
+    }
+})()
 
-const CFG = {
-    PG_IPC_PATH: '/var/run/postgresql',
-    CERT_PATH: fromdev('certs'),
-    SERVER_PORT: 58001,
-}
 
-const httpsOptions = {
-    key: fs.readFileSync(path.join(CFG.CERT_PATH, 'file.pem')),
-    cert: fs.readFileSync(path.join(CFG.CERT_PATH, '/file.crt')),
-}
-
-const server = https.createServer(httpsOptions, app);
+const server = https.createServer(cfg.httpsOptions(), app);
 const io = new socket_io.Server(server);
 
-app.use('/modules', express.static(fromdev('modules')));
+app.use('/modules', express.static(cfg.fromDev('modules')));
 
 app.get('/', (req: express.Request, res: express.Response) => {
-    res.sendFile(fromdev('client.html'));
+    res.sendFile(cfg.fromDev('client.html'));
 });
 
 async function make_pg_client(): Promise<pg.Client>{
-    const client = new pg.Client({ host: CFG.PG_IPC_PATH});
+    const client = new pg.Client({ host: cfg.PG_IPC_PATH});
     await client.connect();
     return client;
 }
@@ -79,7 +88,7 @@ io.on('connection', (socket: socket_io.Socket) => {
 });
 
 
-server.listen(CFG.SERVER_PORT, () => {
-    console.log('server up and running at %s port', CFG.SERVER_PORT);
+server.listen(cfg.SERVER_PORT, () => {
+    console.log('server up and running at %s port', cfg.SERVER_PORT);
 });
 
