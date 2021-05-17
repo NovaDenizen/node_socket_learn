@@ -2,14 +2,17 @@
 console.log('hyperbolic.js loaded');
 
 export class Point {
-    constructor(reference, r, theta) {
+    reference?: Point;
+    r: number;
+    theta: number;
+    constructor(r: number, theta: number, reference?: Point) {
         this.reference = reference; 
         this.r = r;                 // distance from reference
         this.theta = theta;         // bearing from reference
-        Object.seal(this);
+        Object.freeze(this);
     }
     static origin() {
-        return new Point(null, 0, 0);
+        return new Point(0, 0);
     }
 }
 

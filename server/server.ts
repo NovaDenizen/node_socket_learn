@@ -36,7 +36,7 @@ const cfg = new (class CFG {
 const server = https.createServer(cfg.httpsOptions(), app);
 const io = new socket_io.Server(server);
 
-app.use('/modules', express.static(cfg.fromDev('../client/modules')));
+app.use('/modules', express.static(cfg.fromDev('../client/dist')));
 
 app.get('/', (req: express.Request, res: express.Response) => {
     res.sendFile(cfg.fromDev('client.html'));
