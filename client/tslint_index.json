@@ -1,0 +1,7 @@
+{
+    "extends": "tslint:recommended",
+    // index.ts code uses console.log, which should be fine.
+    "rules": {
+        "no-console": false
+    }
+}

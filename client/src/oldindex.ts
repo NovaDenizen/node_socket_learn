@@ -7,7 +7,7 @@ export class Point {
     r: number;
     theta: number;
     constructor(r: number, theta: number, reference?: Point) {
-        this.reference = reference; 
+        this.reference = reference;
         this.r = r;                 // distance from reference
         this.theta = theta;         // bearing from reference
         Object.freeze(this);
@@ -26,7 +26,4 @@ export function nothing() {
 };
 
 export { Complex };
-
-console.log('in index.ts');
-const y = make_x();
 

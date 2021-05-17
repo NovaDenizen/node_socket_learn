@@ -31,7 +31,7 @@ export default class Complex {
         return new Complex(this.a + other.a, this.b + other.b);
     }
     mul(other: Complex): Complex {
-        return new Complex(this.a * other.a - this.b * other.b, 
+        return new Complex(this.a * other.a - this.b * other.b,
                            this.a * other.b + this.b * other.a);
     }
 }
