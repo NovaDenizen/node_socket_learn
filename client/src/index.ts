@@ -1,29 +1,40 @@
 
-import Complex from './complex';
+import * as hyp from './oldindex';
+import socket_client from 'socket.io-client';
 
-console.log('index.ts loaded');
+var URL_SERVER = 'https://www.cymbym.com:58001';
+var socket = socket_client(URL_SERVER);
+
+console.log(hyp.nothing());
+let x = new hyp.Complex(2, -3);
+console.log(`x = ${x}`); 
 
 
-export class Point {
-    reference?: Point;
-    r: number;
-    theta: number;
-    constructor(r: number, theta: number, reference?: Point) {
-        this.reference = reference; 
-        this.r = r;                 // distance from reference
-        this.theta = theta;         // bearing from reference
-        Object.freeze(this);
+socket.on('message', function(data) {
+alert(data);
+});
+socket.on('newdata', function(data) {
+    console.log('got newdata(%o)', data);
+    let nd_div = document.getElementById('newdata');
+    if (nd_div) {
+        nd_div.textContent = '';
+        for (let i = 0; i < data.length; i++) {
+            let row = data[i];
+            let line = '';
+            for (let [key, value] of Object.entries(row)) {
+                line = line + ` ${key}:${value}`;
+            }
+            const node = document.createTextNode(line);
+            const p = document.createElement('p');
+            p.appendChild(node);
+            nd_div.appendChild(p);
+        }
     }
-    static origin() {
-        return new Point(0, 0);
-    }
+});
+let newdatabutton = document.getElementById('newdatabutton');
+if (newdatabutton) {
+    newdatabutton.onclick = function() {
+        socket.emit('getnewdata');
+    };
 }
 
-
-export function nothing() {
-    console.log('index.nothing()');
-}
-
-const x = new Complex(3, 4);
-
-console.log(`x = ${x}`);
