@@ -9,10 +9,13 @@ import path from 'path';
 const app = express();
 
 const cwd = process.cwd();
+function fromdev(dir: string): string {
+    return path.join(cwd, dir);
+}
 
 const CFG = {
     PG_IPC_PATH: '/var/run/postgresql',
-    CERT_PATH: cwd + '/certs',
+    CERT_PATH: fromdev('certs'),
     SERVER_PORT: 58001,
 }
 
@@ -24,10 +27,10 @@ const httpsOptions = {
 const server = https.createServer(httpsOptions, app);
 const io = new socket_io.Server(server);
 
-app.use('/modules', express.static(path.join(cwd, 'modules')))
+app.use('/modules', express.static(fromdev('modules')));
 
 app.get('/', (req: express.Request, res: express.Response) => {
-    res.sendFile(path.join(cwd, '/client.html'));
+    res.sendFile(fromdev('client.html'));
 });
 
 async function make_pg_client(): Promise<pg.Client>{

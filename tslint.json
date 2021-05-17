@@ -1,5 +1,6 @@
 {
     "extends": "tslint:recommended",
+    // server code uses console.log, which should be fine.
     "rules": {
         "no-console": false
     }
