@@ -1,5 +1,8 @@
 
+import Complex from './complex';
+
 console.log('index.ts loaded');
+
 
 export class Point {
     reference?: Point;
@@ -18,5 +21,9 @@ export class Point {
 
 
 export function nothing() {
-    console.log('iindex.nothing()');
+    console.log('index.nothing()');
 }
+
+const x = new Complex(3, 4);
+
+console.log(`x = ${x}`);
