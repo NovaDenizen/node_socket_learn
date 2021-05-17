@@ -10,9 +10,8 @@ const x = new hyp.Complex(2, -3);
 console.log(`x = ${x}`);
 
 
-socket.on('message', data => { alert(data) });
-socket.on('newdata', data => {
-    console.log('got newdata(%o)', data);
+socket.on('message', (data: any) => { alert(data) });
+socket.on('newdata', (data: any[]) => {
     const ndDiv = document.getElementById('newdata');
     if (ndDiv) {
         ndDiv.textContent = '';
