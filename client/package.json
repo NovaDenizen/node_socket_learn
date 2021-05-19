@@ -1,15 +1,15 @@
 {
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npm exec webpack",
-    "tslint": "tslint --exclude src/index.ts --project . && tslint -c tslint_index.json src/index.ts"
-  },
-  "dependencies": {
-    "ts-loader": "^9.1.2",
-    "webpack": "^5.37.0"
-  },
-  "devDependencies": {
-    "socket.io-client": "^4.1.2",
-    "webpack-cli": "^4.7.0"
-  }
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "build": "npm exec webpack",
+        "tslint": "tslint --exclude src/index.ts --project . && tslint -c tslint_index.json src/index.ts"
+    },
+    "dependencies": {
+        "ts-loader": "^9.1.2",
+        "webpack": "^5.37.0"
+    },
+    "devDependencies": {
+        "socket.io-client": "^4.1.2",
+        "webpack-cli": "^4.7.0"
+    }
 }
