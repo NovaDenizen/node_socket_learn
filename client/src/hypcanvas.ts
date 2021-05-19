@@ -40,11 +40,23 @@ export default class HypCanvas {
         this.post_redraw();
         return this.canvas;
     }
-    turtle(): Turtle {
+    newTurtle(): Turtle {
         const hc = this;
-        return {
-            canvas: hc
-        }
+        return new class {
+            penIsDown: boolean;
+            get canvas() {
+                return hc;
+            }
+            constructor() {
+                this.penIsDown = false;
+            }
+            pendown() {
+                this.penIsDown = true;
+            }
+            penup() {
+                this.penIsDown = false;
+            }
+        }();
     }
     draw() {
         const canvas = this.canvas;
@@ -77,6 +89,8 @@ export default class HypCanvas {
 
 export interface Turtle {
     readonly canvas: HypCanvas;
+    pendown();
+    penup();
     /*
     forward(dist: number);
     //backward(dist: number);
@@ -84,8 +98,6 @@ export interface Turtle {
     left(degrees: number);
     right(degrees: number);
     home();
-    pendown();
-    penup();
     color();
     */
 }
