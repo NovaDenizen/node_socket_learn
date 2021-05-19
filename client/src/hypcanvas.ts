@@ -89,8 +89,8 @@ export default class HypCanvas {
 
 export interface Turtle {
     readonly canvas: HypCanvas;
-    pendown();
-    penup();
+    pendown(): void;
+    penup(): void;
     /*
     forward(dist: number);
     //backward(dist: number);
