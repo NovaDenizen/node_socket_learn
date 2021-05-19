@@ -1,5 +1,8 @@
 import * as hyp from "./oldindex";
 import socket_client from "socket.io-client";
+import HypCanvas from "./hypcanvas";
+
+const x = new HypCanvas();
 
 const URL_SERVER = "https://www.cymbym.com:58001";
 const socket = socket_client(URL_SERVER);
