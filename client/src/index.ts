@@ -34,7 +34,7 @@ if (newdatabutton) {
     };
 }
 
-const hc = new HypCanvas({ size: 1000 });
+const hc = new HypCanvas({ size: 999 });
 document.body.appendChild(hc.make_canvas());
 
 const turtle = hc.turtle();
