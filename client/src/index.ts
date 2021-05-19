@@ -1,4 +1,3 @@
-import * as hyp from "./oldindex";
 import socket_client from "socket.io-client";
 import HypCanvas from "./hypcanvas";
 
@@ -7,14 +6,11 @@ const x = new HypCanvas();
 const URL_SERVER = "https://www.cymbym.com:58001";
 const socket = socket_client(URL_SERVER);
 
-console.log(hyp.nothing());
-const x = new hyp.Complex(2, -3);
-console.log(`x = ${x}`);
 
 socket.on("message", (data: any) => {
     alert(data);
 });
-socket.on("newdata", (data: any[]) => {
+socket.on("xnewdata", (data: any[]) => {
     const ndDiv = document.getElementById("newdata");
     if (ndDiv) {
         ndDiv.textContent = "";
@@ -37,3 +33,7 @@ if (newdatabutton) {
         socket.emit("getnewdata");
     };
 }
+
+const hc = new HypCanvas({ size: 300 });
+document.body.appendChild(hc.make_canvas());
+
