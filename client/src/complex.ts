@@ -26,8 +26,15 @@ export default class Complex {
         }
         return `[${this.a}${bsign}${b}i]`;
     }
-    add(other: Complex): Complex {
-        return new Complex(this.a + other.a, this.b + other.b);
+    add(other: Complex | number): Complex {
+        if (typeof(other) === "number") {
+            return new Complex(this.a + other, this.b);
+        } else {
+            return new Complex(this.a + other.a, this.b + other.b);
+        }
+    }
+    sub(other: Complex): Complex {
+        return new Complex(this.a - other.a, this.b - other.b);
     }
     mul(other: Complex): Complex {
         return new Complex(
@@ -35,4 +42,25 @@ export default class Complex {
             this.a * other.b + this.b * other.a
         );
     }
+    div(other: Complex): Complex {
+        return this.mul(other.invert());
+    }
+    magSq(): number {
+        return (this.a*this.a + this.b*this.b);
+    }
+    mag(): number {
+        return Math.sqrt(this.magSq());
+    }
+    invert(): Complex {
+        const invMagSq = 1.0 / this.magSq();
+        return new Complex(this.a * invMagSq, -this.b * invMagSq);
+    }
+    complement(): Complex {
+        return new Complex(this.a, -this.b);
+    }
+    normalize(): Complex {
+        const invMag = 1.0 / this.mag();
+        return new Complex(this.a * invMag, this.b * invMag);
+    }
+
 }
