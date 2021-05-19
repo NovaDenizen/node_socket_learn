@@ -41,7 +41,10 @@ export default class HypCanvas {
         return this.canvas;
     }
     turtle(): Turtle {
-       return {};
+        const hc = this;
+        return {
+            canvas: hc
+        }
     }
     draw() {
         const canvas = this.canvas;
@@ -73,8 +76,8 @@ export default class HypCanvas {
 }
 
 export interface Turtle {
-    /*
     readonly canvas: HypCanvas;
+    /*
     forward(dist: number);
     //backward(dist: number);
     // TODO: goto(point: Point);

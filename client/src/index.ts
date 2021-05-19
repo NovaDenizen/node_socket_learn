@@ -37,3 +37,5 @@ if (newdatabutton) {
 const hc = new HypCanvas({ size: 300 });
 document.body.appendChild(hc.make_canvas());
 
+const turtle = hc.turtle();
+
