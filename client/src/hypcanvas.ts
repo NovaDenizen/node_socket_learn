@@ -156,6 +156,7 @@ export default class HypCanvas {
     }
     addLine(p1: Complex, p2: Complex) {
         this.lines.push({ from: p1, to: p2});
+        this.post_redraw();
     }
 }
 
