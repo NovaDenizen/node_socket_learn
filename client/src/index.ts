@@ -35,7 +35,27 @@ if (newdatabutton) {
 }
 
 const hc = new HypCanvas({ size: 999 });
-document.body.appendChild(hc.make_canvas());
+document.body.appendChild(hc.makeCanvas());
 
-const turtle = hc.newTurtle();
+{
+    const n = 5;
+    const deltaR = 3 / n;
+    let deltaTheta = Math.PI * 2 / n;
+    for (let ri = 1; ri < n; ri++) {
+        for (let thetai = 0; thetai < n; thetai++) {
+            // radial line
+            let r = deltaR * ri;
+            let theta = deltaTheta * thetai;
+            // the 'base' point
+            let x = HypCanvas.polar(r, theta);
+            // the point inward
+            let y = HypCanvas.polar(r - deltaR, theta);
+            hc.addLine(x, y);
+            // the next circumferential point
+            let z = HypCanvas.polar(r, theta + deltaTheta);
+            hc.addLine(x, z);
+        }
+    }
+}
+
 

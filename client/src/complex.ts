@@ -62,5 +62,14 @@ export default class Complex {
         const invMag = 1.0 / this.mag();
         return new Complex(this.a * invMag, this.b * invMag);
     }
+    neg(): Complex {
+        return new Complex(-this.a, -this.b);
+    }
+    scale(s: number): Complex {
+        return new Complex(this.a*s, this.b*s);
+    }
+    static readonly one: Complex = new Complex(1, 0);
+    static readonly zero: Complex = new Complex(0, 0);
+    static readonly i: Complex = new Complex(0, 1);
 
 }
