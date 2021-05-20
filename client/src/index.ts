@@ -58,4 +58,5 @@ document.body.appendChild(hc.makeCanvas());
     }
 }
 
+console.log("index.ts is done");
 
