@@ -34,11 +34,11 @@ if (newdatabutton) {
     };
 }
 
-const hc = new HypCanvas({ size: 999 });
+const hc = new HypCanvas({ size: 399 });
 document.body.appendChild(hc.makeCanvas());
 
 {
-    const n = 5;
+    const n = 4;
     const deltaR = 3 / n;
     let deltaTheta = Math.PI * 2 / n;
     for (let ri = 1; ri < n; ri++) {

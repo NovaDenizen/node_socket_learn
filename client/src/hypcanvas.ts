@@ -73,8 +73,9 @@ export default class HypCanvas {
         context.closePath();
         context.stroke();
         for (const e of this.lines) {
-            console.log("drawing line %o", e);
+            console.log("drawing line ", e);
             this.drawDiscArcLine(context, e.from, e.to);
+            //this.drawSimpleDiscLine(context, e.from, e.to);
         }
     }
     complexToXY(c: Complex): { x: number, y: number } {
@@ -87,7 +88,7 @@ export default class HypCanvas {
         const ascreen = this.complexToXY(a);
         context.moveTo(ascreen.x, ascreen.y);
         const bscreen = this.complexToXY(b);
-        context.moveTo(bscreen.x, bscreen.y);
+        context.lineTo(bscreen.x, bscreen.y);
         context.closePath();
         context.stroke();
     }
@@ -108,9 +109,12 @@ export default class HypCanvas {
             start = p2vec;
             end = p1vec;
         }
+        console.log("start: ", start);
+        console.log("end: ", end);
 
         const startangle = Math.atan2(start.b, start.a);
         const endangle = Math.atan2(end.b, end.a);
+        console.log("startangle: ", startangle, " endangle: ", endangle);
 
         const centerScreen = this.complexToXY(center);
         const r = start.mag();
@@ -172,21 +176,31 @@ function findCenter(a: Complex, b: Complex, c: Complex): Complex {
     const b1 = b.sub(a);
     const c1 = c.sub(a);
     // rotate and scale b1 to (1,0);
-    const c2 = c.div(b1);
+    const c2 = c1.div(b1);
     // translate left 0.5
     const c3 = new Complex(c2.a - 0.5, c2.b);
 
     // now a and b are at (-0.5, 0) and (+0.5, 0), and the third point is anywhere.
     // Center.x = 0.  We only need to find center.y.
     // it fulfills the following quadratic equation
-    // (0.5^2 + y^2) = c3.a^2 + (y - c3.b)^2
+    // [distance^2 between a and center} = {distance^2 between c and center}
+    // 0.5^2 + y^2 = c3.a^2 + (y - c3.b)^2
     // 1/4 + y^2 = c3.a^2 + y^2 - 2*y*c3.b + c3.b^2
     // 1/4 = c3.a^2 + c3.b^2 - 2*y*c3.b
-    // 1/4 - c3.magSq() = 2*y*c3.b
-    // (1/4 - c3.magSq())/(2*c3.b) = y
+    // 1/4 - c3.magSq() = -2*y*c3.b
+    // (c3.magSq() - 1/4)/(2*c3.b) = y
 
-    // we know c2.b !=0 because the points are not collinear
-    const y = (0.25 - c3.magSq())/(2*c3.b);
+    // we know c3.b != 0 because the points are not collinear
+    const y = (c3.magSq() - 0.25)/(2*c3.b);
+
+    if (true) {
+        let adistsq = 0.5*0.5 + y*y;
+        let cdistsq = c3.a*c3.a + (y - c3.b)*(y - c3.b);
+        if (Math.abs(adistsq - cdistsq) > 0.01) {
+            throw `y was bad: adistsq=${adistsq}, cdistsq=${cdistsq}`
+        }
+    }
+
 
     // now reverse the transformations
     // translate right 0.5
@@ -195,6 +209,16 @@ function findCenter(a: Complex, b: Complex, c: Complex): Complex {
     const center1 = center2.mul(b1);
     // translate origin to a
     const center = center1.add(a);
+    if (true) {
+        // check radii
+        let ra = center.sub(a).mag();
+        let rb = center.sub(b).mag();
+        let rc = center.sub(c).mag();
+        if (Math.abs(ra - rb) > 0.01 ||
+            Math.abs(rb - rc) > 0.01) {
+            throw `Got bad center: a=${a} b=${b} c=${c} center=${center}`;
+        }
+    }
     return center;
 }
 
@@ -231,7 +255,7 @@ export class Xform {
             //this.c * other.a + this.d * other.c,
             this.c.mul(other.a).add(this.d.mul(other.c)),
             //this.d * other.b + this.d * other.d
-            this.d.mul(other.b).add(this.d.mul(other.d))
+            this.c.mul(other.b).add(this.d.mul(other.d))
         );
     }
     det(): Complex {
