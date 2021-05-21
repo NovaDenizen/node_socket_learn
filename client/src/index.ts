@@ -34,7 +34,7 @@ if (newdatabutton) {
     };
 }
 
-const hc = new HypCanvas({ size: 399 });
+const hc = new HypCanvas({ size: 999 });
 document.body.appendChild(hc.makeCanvas());
 
 {
