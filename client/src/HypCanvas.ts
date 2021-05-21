@@ -1,4 +1,4 @@
-import Complex from './complex';
+import Complex from './Complex';
 
 /**
  * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disc model.
@@ -17,14 +17,11 @@ export default class HypCanvas {
         return -1;
     }
     constructor(opts?: any) {
-        if (opts && opts.size) {
-            this.size = opts.size;
-        } else {
-            this.size = 500;
-        }
+        this.size = opts?.size || 500;
         this.lines = [];
         this.canvas = undefined;
         this.pendingRedraw = false;
+        Object.seal(this);
     }
     postRedraw() {
         if (!this.pendingRedraw) {
