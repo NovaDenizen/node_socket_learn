@@ -176,7 +176,24 @@ export default class HypCanvas {
         this.lines.push({ from: p1, to: p2});
         this.postRedraw();
     }
+    turtle(): Turtle {
+        return new TurtleImpl(this);
+    }
 }
+
+export interface Turtle {
+    readonly canvas: HypCanvas;
+}
+
+class TurtleImpl {
+    readonly canvas: HypCanvas;
+    constructor(canvas: HypCanvas) {
+        this.canvas = canvas;;
+        Object.seal(this);
+    }
+};
+
+
 
 function det(a: number, b: number, c: number, d: number): number {
     return a*d - b*c;
