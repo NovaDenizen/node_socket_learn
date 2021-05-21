@@ -38,8 +38,8 @@ const hc = new HypCanvas({ size: 399 });
 document.body.appendChild(hc.makeCanvas());
 
 {
-    const n = 4;
-    const deltaR = 3 / n;
+    const n = 30;
+    const deltaR = 8 / n;
     let deltaTheta = Math.PI * 2 / n;
     for (let ri = 1; ri < n; ri++) {
         for (let thetai = 0; thetai < n; thetai++) {
@@ -58,5 +58,5 @@ document.body.appendChild(hc.makeCanvas());
     }
 }
 
-console.log("index.ts is done");
+//console.log("index.ts is done");
 

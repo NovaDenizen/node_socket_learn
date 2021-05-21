@@ -46,7 +46,7 @@ export default class HypCanvas {
         return this.canvas;
     }
     draw() {
-        console.log("redrawing, with %d lines", this.lines.length);
+        //console.log("redrawing, with %d lines", this.lines.length);
         const canvas = this.canvas;
         if (!canvas) {
             return;
@@ -68,13 +68,13 @@ export default class HypCanvas {
             this.size / 2,
             this.size / 2,
             0,
-            Math.PI / 4
+            Math.PI * 2
         );
         context.closePath();
         context.stroke();
-        console.log("HypCanvas.draw(): ", this.lines);
+        //console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
-            console.log("drawing line ", e);
+            //console.log("drawing line ", e);
             this.drawDiscArcLine(context, e.from, e.to);
             //this.drawSimpleDiscLine(context, e.from, e.to);
         }
@@ -110,12 +110,12 @@ export default class HypCanvas {
             start = p2vec;
             end = p1vec;
         }
-        console.log("start: ", start);
-        console.log("end: ", end);
+        //console.log("start: ", start);
+        //console.log("end: ", end);
 
         const startangle = Math.atan2(start.b, start.a);
         const endangle = Math.atan2(end.b, end.a);
-        console.log("startangle: ", startangle, " endangle: ", endangle);
+        //console.log("startangle: ", startangle, " endangle: ", endangle);
 
         // so far, all these calculations have bene in sane complex right-handed coordinates (+y is up)
         // Now we go into the realm of raster coordinates and clockwise angles.
@@ -127,7 +127,7 @@ export default class HypCanvas {
         context.beginPath();
         // the 'true' on the end is the 'counterclockwise' parameter
         context.arc(centerScreen.x, centerScreen.y, screen_r, -startangle, -endangle, true);
-        context.closePath();
+        //context.closePath();
         context.stroke();
     }
     drawDiscArcLine(context: CanvasRenderingContext2D, a?: Complex, b?: Complex) {
@@ -135,18 +135,25 @@ export default class HypCanvas {
             throw 'bad drawLine';
         }
         const amag = a.magSq();
-        if (a.magSq() < 0.0001) { 
-            // a is the origin, so it's just a straight line.
+        if (a.magSq() < 0.0001 || b.magSq() < 0.0001) { 
+            // a point is at the origin, so it's just a straight line.
             this.drawSimpleDiscLine(context, a, b);
             return;
         }
         // the circuler inversion of a
+        // by some mystical mathematical mystery, this point (and the inversion of b)
+        // are both on the orthoganlly intersecting circle that passes through a and b.
         const c = a.scale(1 / a.magSq());
-        // need to find the circle covering a, b, and c
+        // c.mag() === 1/a.mag()
+
+        // checking if a, b, and c are collinear.  This will happen if a and b are on the
+        // same radius or opposite radii.
+
         // vector from a to b 
         const ab = b.sub(a);
         // vector from a to c
         const ac = c.sub(a);
+        // twice the area of the triangle abc
         const twiceabc = ac.a*ab.b - ac.b*ab.a;
         if (Math.abs(twiceabc) < 0.0001) {
             // points are collinear, draw a straight line
