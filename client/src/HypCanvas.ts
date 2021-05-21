@@ -44,7 +44,7 @@ export default class HypCanvas {
         return this.canvas;
     }
     draw() {
-        //console.log("redrawing, with %d lines", this.lines.length);
+        console.log("redrawing, with %d lines", this.lines.length);
         const canvas = this.canvas;
         if (!canvas) {
             return;
