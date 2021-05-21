@@ -68,6 +68,9 @@ export default class Complex {
     scale(s: number): Complex {
         return new Complex(this.a*s, this.b*s);
     }
+    static unit(theta: number): Complex {
+        return new Complex(Math.cos(theta), Math.sin(theta));
+    }
     static readonly one: Complex = new Complex(1, 0);
     static readonly zero: Complex = new Complex(0, 0);
     static readonly i: Complex = new Complex(0, 1);

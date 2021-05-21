@@ -222,7 +222,7 @@ function findCenter(a: Complex, b: Complex, c: Complex): Complex {
     // we know c3.b != 0 because the points are not collinear
     const y = (c3.magSq() - 0.25)/(2*c3.b);
 
-    if (true) {
+    if (false) { // check intermediate answer
         let adistsq = 0.5*0.5 + y*y;
         let cdistsq = c3.a*c3.a + (y - c3.b)*(y - c3.b);
         if (Math.abs(adistsq - cdistsq) > 0.01) {
@@ -238,7 +238,7 @@ function findCenter(a: Complex, b: Complex, c: Complex): Complex {
     const center1 = center2.mul(b1);
     // translate origin to a
     const center = center1.add(a);
-    if (true) {
+    if (false) { // check final answer
         // check radii
         let ra = center.sub(a).mag();
         let rb = center.sub(b).mag();

@@ -1,6 +1,7 @@
 import Complex from "./Complex";
 
 
+// implements a Mobius transform, specifically for managing a unit radius Poincare disc projection.
 export default class Xform {
     // represents a Möbius transform over complex numbers of the form f(z) = (a*z + b)/(c*z + d) 
     // with the condition ad - bc != 0.
@@ -122,7 +123,14 @@ export default class Xform {
         //                    (-p/|p| - p)/(|p| + 1)
         //                    -p/|p|(1 + |p|)/(|p| + 1)
         //                    -p/|p|
-        return new Xform(new Complex(1), p.neg(), p.complement().neg(), new Complex(1));
+        return new Xform(new Complex(1), p.neg(), p.complement().neg(), Complex.one);
+    }
+    static originToPoint(p: Complex): Xform {
+        return Xform.pointToOrigin(p.neg());
+    }
+    // Creates a Xform that rotates counterclockwise about the origin by the given radians
+    static rotate(theta: number): Xform {
+        return new Xform(Complex.unit(theta), Complex.zero, Complex.zero, Complex.one);
     }
     static readonly identity: Xform = new Xform(Complex.one, Complex.zero, Complex.zero, Complex.one);
 }
