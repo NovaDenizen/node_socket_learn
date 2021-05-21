@@ -1,5 +1,5 @@
 import socket_client from "socket.io-client";
-import HypCanvas from "./hypcanvas";
+import HypCanvas from "./HypCanvas";
 
 const x = new HypCanvas();
 
