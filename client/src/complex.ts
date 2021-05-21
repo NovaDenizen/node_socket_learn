@@ -2,15 +2,15 @@ export default class Complex {
     a: number;
     b: number;
     constructor(a?: number, b?: number) {
-        if (b !== undefined) {
-            this.b = b;
-        } else {
-            this.b = 0;
-        }
         if (a !== undefined) {
             this.a = a;
         } else {
             this.a = 0;
+        }
+        if (b !== undefined) {
+            this.b = b;
+        } else {
+            this.b = 0;
         }
         Object.freeze(this);
     }

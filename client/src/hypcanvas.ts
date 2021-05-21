@@ -68,10 +68,11 @@ export default class HypCanvas {
             this.size / 2,
             this.size / 2,
             0,
-            Math.PI * 2
+            Math.PI / 4
         );
         context.closePath();
         context.stroke();
+        console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             console.log("drawing line ", e);
             this.drawDiscArcLine(context, e.from, e.to);
@@ -116,12 +117,16 @@ export default class HypCanvas {
         const endangle = Math.atan2(end.b, end.a);
         console.log("startangle: ", startangle, " endangle: ", endangle);
 
+        // so far, all these calculations have bene in sane complex right-handed coordinates (+y is up)
+        // Now we go into the realm of raster coordinates and clockwise angles.
+        // +y goes down.  Angles are measuered *clockwise* from the right.
         const centerScreen = this.complexToXY(center);
         const r = start.mag();
         const screen_r = r * this.size/2;
+
         context.beginPath();
         // the 'true' on the end is the 'counterclockwise' parameter
-        context.arc(centerScreen.x, centerScreen.y, screen_r, startangle, endangle, true);
+        context.arc(centerScreen.x, centerScreen.y, screen_r, -startangle, -endangle, true);
         context.closePath();
         context.stroke();
     }
@@ -158,7 +163,9 @@ export default class HypCanvas {
         // d/2 = arctanh(r)
         // tanh(d/2) = r
         const discR = Math.tanh(0.5 * r);
-        return new Complex(discR * Math.cos(radians), discR * Math.sin(radians));
+        const res = new Complex(discR * Math.cos(radians), discR * Math.sin(radians));
+        //console.log(`polar(${r}, ${radians}) returns `, res);
+        return res;
     }
     addLine(p1: Complex, p2: Complex) {
         this.lines.push({ from: p1, to: p2});
