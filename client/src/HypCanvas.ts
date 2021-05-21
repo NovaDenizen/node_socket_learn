@@ -44,7 +44,7 @@ export default class HypCanvas {
         return this.canvas;
     }
     draw() {
-        console.log("redrawing, with %d lines", this.lines.length);
+        //console.log("redrawing, with %d lines", this.lines.length);
         const canvas = this.canvas;
         if (!canvas) {
             return;
@@ -70,7 +70,7 @@ export default class HypCanvas {
         );
         context.closePath();
         context.stroke();
-        //console.log("HypCanvas.draw(): ", this.lines);
+        console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             //console.log("drawing line ", e);
             this.drawDiscArcLine(context, e.from, e.to);
