@@ -37,7 +37,7 @@ if (newdatabutton) {
 const hc = new HypCanvas({ size: 999 });
 document.body.appendChild(hc.makeCanvas());
 
-{
+if (false) {
     const n = 30;
     const deltaR = 8 / n;
     let deltaTheta = Math.PI * 2 / n;
@@ -57,6 +57,26 @@ document.body.appendChild(hc.makeCanvas());
         }
     }
 }
+
+{
+    const deltaDist = 0.1;
+    const n = 1;
+    for (let i = 1; i <= n; i++)
+    {  // trace some incomplete squares, 
+        const t = hc.turtle();
+        const d = i * deltaDist;
+        const turn = Math.PI/2;
+        t.forward(d);
+        t.rotate(turn);
+        t.forward(d);
+        t.rotate(turn);
+        t.forward(d);
+        t.rotate(turn);
+        t.forward(d);
+        t.rotate(turn);
+    }
+}
+
 
 //console.log("index.ts is done");
 

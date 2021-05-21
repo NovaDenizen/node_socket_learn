@@ -1,6 +1,5 @@
 import Complex from "./Complex";
 
-
 // implements a Mobius transform, specifically for managing a unit radius Poincare disc projection.
 export default class Xform {
     // represents a Möbius transform over complex numbers of the form f(z) = (a*z + b)/(c*z + d) 
@@ -134,3 +133,9 @@ export default class Xform {
     }
     static readonly identity: Xform = new Xform(Complex.one, Complex.zero, Complex.zero, Complex.one);
 }
+
+/*
+interface XformableTo<X> {
+    xformed(xf: Xform): X;
+}
+*/

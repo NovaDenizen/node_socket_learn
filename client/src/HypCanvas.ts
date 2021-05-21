@@ -183,14 +183,47 @@ export default class HypCanvas {
 
 export interface Turtle {
     readonly canvas: HypCanvas;
+    clone(): Turtle;
+    rotate(radians: number): void;
+    forward(distance: number): void;
 }
 
 class TurtleImpl {
     readonly canvas: HypCanvas;
+    // sends the origin and the +x vector to the turtle location and forward vector.
+    xform: Xform;
     constructor(canvas: HypCanvas) {
         this.canvas = canvas;;
+        this.xform = Xform.identity;
         Object.seal(this);
     }
+    clone(): Turtle {
+        let t = new TurtleImpl(this.canvas);
+        t.xform = this.xform;
+        return t;
+    }
+    rotate(radians: number): void {
+        // We want to make a new xform that sends the origin to the same turtle point, 
+        // and sends +X to the newly rotated turtle forward vector.
+        // This has something to do with the gyr[a,b] operator and commutative xforms, but
+        // I haven't figured that out yet.
+
+        // I'm guessing this is what I want:
+        const newxf= this.xform.compose(Xform.rotate(radians));
+        this.xform = newxf;
+    }
+    forward(distance: number): void {
+        // figure out the turtle point
+        let start = this.xform.xform(Complex.zero);
+        let rawEnd = HypCanvas.polar(0, distance);
+        let end = this.xform.xform(rawEnd);
+        this.canvas.addLine(start, end);
+
+        // need the new turtle xform.
+        // it sends -rawEnd to start, origin to end, and -end to origin.
+        this.xform = Xform.threePoint(rawEnd.neg(), Complex.zero, end.neg(), start, end, Complex.zero);
+    }
+
 };
 
 
