@@ -1,5 +1,5 @@
 import socket_client from "socket.io-client";
-import HypCanvas from "./HypCanvas";
+import { HypCanvas, Turtle } from "./HypCanvas";
 
 const x = new HypCanvas();
 
@@ -102,10 +102,19 @@ if (false) {
     let turn = Math.PI/3; // the external angle, not the internal angle
     const t = hc.turtle();
     t.penDown();
-    for (let i = 0; i < 7; i++) {
-        t.forward(e);
-        t.rotate(turn);
+    let heptagons: (depth: number, t: Turtle) => void;
+    heptagons = (depth: number, t: Turtle) => {
+        for (let i = 0; i < 7; i++) {
+            t.forward(e);
+            if (depth > 0) {
+                const t2 = t.clone();
+                t2.rotate(Math.PI);
+                heptagons(depth-1, t2);
+            }
+            t.rotate(turn);
+        }
     }
+    heptagons(2, t);
 }
 
 

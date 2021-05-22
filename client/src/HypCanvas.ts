@@ -250,6 +250,8 @@ export default class HypCanvas {
     }
 }
 
+export { HypCanvas };
+
 export interface Turtle {
     readonly canvas: HypCanvas;
     readonly penIsDown: boolean;
