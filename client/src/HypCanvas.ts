@@ -15,6 +15,7 @@ export default class HypCanvas {
     private lines: {from: Complex, to: Complex}[];
     private pendingRedraw: boolean;
     private view: Xform;
+    private touch?: number;
     get K() {
         return -1;
     }
@@ -24,6 +25,7 @@ export default class HypCanvas {
         this.canvas = undefined;
         this.pendingRedraw = false;
         this.view = Xform.identity;
+        this.touch = undefined;
         Object.seal(this);
     }
     private postRedraw() {
@@ -63,47 +65,51 @@ export default class HypCanvas {
             } 
             const screenEnd = { x: ev.clientX, y: ev.clientY };
             const screenStart = { x: screenEnd.x - ev.movementX, y: screenEnd.y - ev.movementY };
-            let discStart = this.xyToComplex(screenStart);
-            let discEnd = this.xyToComplex(screenEnd);
 
-            //console.log("discStart ", discStart, " discEnd ", discEnd);
-            if (discStart.magSq() > 1) { 
-                // clamp it to disc
-                discStart = discStart.scale(0.999/discStart.mag());
-            }
-            if (discEnd.magSq() > 1) { 
-                // clamp it to disc
-                discEnd = discEnd.scale(0.999/discEnd.mag());
-            }
-            let oToEnd, startToO, viewChange;
-            try {
-                oToEnd = Xform.originToPoint(discEnd);
-                startToO = Xform.pointToOrigin(discStart);
-                viewChange = oToEnd.compose(startToO);
-            } catch (err) {
-                console.error('got singular transform building view change');
-                console.log('oToEnd ', oToEnd);
-                console.log('startToO ', startToO);
-                console.log('viewChange ', viewChange);
-                throw err;
-            }
-
-            let newView;
-
-            try {
-                newView = viewChange.compose(this.view);
-            } catch (err) {
-                console.error('Got singular transform while prepending view change');
-                console.log('view: ', this.view);
-                console.log('viewChange: ', viewChange);
-                throw err;
-            }
-            this.view = newView;
-            //console.log("new view", this.view);
-            this.postRedraw();
+            this.doScreenMove(screenStart, screenEnd);
         } else {
             //console.log("got unhandled event on %s", handler, ev);
         }
+    }
+    private doScreenMove(screenStart: { x: number, y: number}, screenEnd: { x: number, y: number}) {
+        let discStart = this.xyToComplex(screenStart);
+        let discEnd = this.xyToComplex(screenEnd);
+
+        //console.log("discStart ", discStart, " discEnd ", discEnd);
+        if (discStart.magSq() > 1) { 
+            // clamp it to disc
+            discStart = discStart.scale(0.999/discStart.mag());
+        }
+        if (discEnd.magSq() > 1) { 
+            // clamp it to disc
+            discEnd = discEnd.scale(0.999/discEnd.mag());
+        }
+        let oToEnd, startToO, viewChange;
+        try {
+            oToEnd = Xform.originToPoint(discEnd);
+            startToO = Xform.pointToOrigin(discStart);
+            viewChange = oToEnd.compose(startToO);
+        } catch (err) {
+            console.error('got singular transform building view change');
+            console.log('oToEnd ', oToEnd);
+            console.log('startToO ', startToO);
+            console.log('viewChange ', viewChange);
+            throw err;
+        }
+
+        let newView;
+
+        try {
+            newView = viewChange.compose(this.view);
+        } catch (err) {
+            console.error('Got singular transform while prepending view change');
+            console.log('view: ', this.view);
+            console.log('viewChange: ', viewChange);
+            throw err;
+        }
+        this.view = newView;
+        //console.log("new view", this.view);
+        this.postRedraw();
     }
     private draw() {
         //console.log("redrawing, with %d lines", this.lines.length);
