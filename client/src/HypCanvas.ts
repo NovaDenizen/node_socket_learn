@@ -15,7 +15,7 @@ export default class HypCanvas {
     private lines: {from: Complex, to: Complex}[];
     private pendingRedraw: boolean;
     private view: Xform;
-    private touch?: number;
+    private touch?: { id: number, clientX: number, clientY: number };
     get K() {
         return -1;
     }
@@ -67,6 +67,42 @@ export default class HypCanvas {
             const screenStart = { x: screenEnd.x - ev.movementX, y: screenEnd.y - ev.movementY };
 
             this.doScreenMove(screenStart, screenEnd);
+        } else if (handler === 'touchstart') {
+            ev.preventDefault();
+            if (this.touch) {
+                // we already have a touch, thank you very much.
+                return;
+            }
+            let t = ev.changedTouches.item(0);
+            this.touch = { id: t.identifier, clientX: t.clientX, clientY: t.clientY };
+        } else if (handler === 'touchend') {
+            ev.preventDerfault();
+            if (!this.touch) {
+                // we don't have a touch, so we don't care
+                return;
+            }
+            for (let i = 0; i < ev.changedTouches.length; i++) {
+                const t = ev.changedTouches.item(i);
+                if (t.identifier === this.touch.id) {
+                    this.touch = undefined;
+                    return; // we're done here.
+                }
+            }
+        } else if (handler === 'touchmove') {
+            ev.preventDefault();
+            if (!this.touch) {
+                // we don't have a touch, so we don't care
+                return;
+            }
+            for (let i = 0; i < ev.changedTouches.length; i++) {
+                const t = ev.changedTouches.item(i);
+                if (t.identifier === this.touch.id) {
+                    this.doScreenMove({ x: this.touch.clientX, y: this.touch.clientY },
+                                      { x: t.clientX, y: t.clientY });
+                    this.touch.clientX = t.clientX;
+                    this.touch.clientY = t.clientY;
+                }
+            }
         } else {
             //console.log("got unhandled event on %s", handler, ev);
         }
