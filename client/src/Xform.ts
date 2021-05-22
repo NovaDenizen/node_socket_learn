@@ -33,12 +33,15 @@ export default class Xform {
         return num.div(den);
     }
     constructor(a: Complex, b: Complex, c: Complex, d: Complex) {
-        this.a = a;
-        this.b = b;
-        this.c = c;
-        this.d = d;
+        // we want to scale all the terms so that c.magSq() + d.magSq() = 1
+        let denscale = Math.sqrt(1 / (c.magSq() + d.magSq()));
+        this.a = a.scale(denscale);
+        this.b = b.scale(denscale);
+        this.c = c.scale(denscale);
+        this.d = d.scale(denscale);
         const detmag = this.det().magSq();
-        if (detmag < 0.0000001) {
+        const limit = 1e-10;
+        if (detmag < limit) {
             console.error(`singular transform (${detmag}): `, this);
             throw "Xform.constructor: singular transform";
         }

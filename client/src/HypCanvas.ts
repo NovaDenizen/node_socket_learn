@@ -61,15 +61,12 @@ export default class HypCanvas {
                 // no buttons are down, so don't do anything.
                 return;
             } 
-            if (ev.movementX == 0 && ev.movementY == 0) {
-                // no movement, don't do anything
-                return;
-            }
-            console.log("got mousemove ", ev);
             const screenEnd = { x: ev.clientX, y: ev.clientY };
             const screenStart = { x: screenEnd.x - ev.movementX, y: screenEnd.y - ev.movementY };
             let discStart = this.xyToComplex(screenStart);
             let discEnd = this.xyToComplex(screenEnd);
+
+            //console.log("discStart ", discStart, " discEnd ", discEnd);
             if (discStart.magSq() > 1) { 
                 // clamp it to disc
                 discStart = discStart.scale(0.999/discStart.mag());
@@ -78,9 +75,31 @@ export default class HypCanvas {
                 // clamp it to disc
                 discEnd = discEnd.scale(0.999/discEnd.mag());
             }
-            this.view = this.view.compose(Xform.pointToOrigin(discStart))
-                                 .compose(Xform.originToPoint(discEnd));
-            console.log("new view", this.view);
+            let oToEnd, startToO, viewChange;
+            try {
+                oToEnd = Xform.originToPoint(discEnd);
+                startToO = Xform.pointToOrigin(discStart);
+                viewChange = oToEnd.compose(startToO);
+            } catch (err) {
+                console.error('got singular transform building view change');
+                console.log('oToEnd ', oToEnd);
+                console.log('startToO ', startToO);
+                console.log('viewChange ', viewChange);
+                throw err;
+            }
+
+            let newView;
+
+            try {
+                newView = viewChange.compose(this.view);
+            } catch (err) {
+                console.error('Got singular transform while prepending view change');
+                console.log('view: ', this.view);
+                console.log('viewChange: ', viewChange);
+                throw err;
+            }
+            this.view = newView;
+            //console.log("new view", this.view);
             this.postRedraw();
         } else {
             //console.log("got unhandled event on %s", handler, ev);
@@ -89,7 +108,7 @@ export default class HypCanvas {
     private draw() {
         //console.log("redrawing, with %d lines", this.lines.length);
         const canvas = this.canvas;
-        console.log(canvas);
+        //console.log(canvas);
         if (!canvas) {
             return;
         }
@@ -114,7 +133,7 @@ export default class HypCanvas {
         );
         context.closePath();
         context.stroke();
-        console.log("HypCanvas.draw(): ", this.lines);
+        //console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             //console.log("drawing line ", e);
             this.drawDiscArcLine(context, this.view.xform(e.from), this.view.xform(e.to));

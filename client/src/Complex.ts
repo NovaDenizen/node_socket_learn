@@ -49,9 +49,10 @@ export default class Complex {
     }
     invert(): Complex {
         const mag2 = this.magSq();
-        if (mag2 < 0.0001) {
-            throw 'tried to invert Complex 0';
-        }
+        // I am unsure about commenting this out.  But I don't know exactly where to put this cutoff
+        //    if (mag2 < 0.0000001) {
+        //        throw 'tried to invert Complex 0';
+        //    }
         const invMagSq = 1.0 / this.magSq();
         return new Complex(this.a * invMagSq, -this.b * invMagSq);
     }
