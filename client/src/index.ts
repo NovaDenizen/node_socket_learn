@@ -58,7 +58,8 @@ if (false) {
     }
 }
 
-{
+if (false) {
+    // draw a few attempted euclidean squares
     const deltaDist = 0.1;
     const n = 10;
     for (let i = 1; i <= n; i++)
@@ -74,6 +75,35 @@ if (false) {
         t.forward(d);
         t.rotate(turn);
         t.forward(d);
+        t.rotate(turn);
+    }
+}
+/*
+    hyperbolic law of cosines (k=1):
+        for any triangle with internal angles alpha, beta, gamma and side a opposite alpha:
+            cos(alpha) = -cos(beta)cos(gamma) + sin(beta)sin(gamma)cosh(a)
+
+        For the (7,3) tiling (heptagons meeting 3 at each vertex)
+        center a heptagon on the origin.
+        consider one of the 7 slices of the heptagon, an iscoceles triangle
+        r is the distance from O to a vertex
+        e is the outer edge length
+        E = 2pi/7, the pie-slice angle at the origin opposite e.
+        G = pi/3, half the internal angle of the heptagon.
+
+        cos(2pi/7) = -cos(pi/3)cos(pi/3)) + sin(pi/3)sin(pi/3)cosh(e)
+        cos(2pi/7) = -1/4 + 3/4*cosh(e)
+        cosh(e) = (cos(2pi/7) + 1/4)/(3/4)
+        e = arccosh((cos(2pi/7) + 1/4)/(3/4))
+*/
+
+{
+    let e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
+    let turn = Math.PI/3; // the external angle, not the internal angle
+    const t = hc.turtle();
+    t.penDown();
+    for (let i = 0; i < 7; i++) {
+        t.forward(e);
         t.rotate(turn);
     }
 }
