@@ -203,26 +203,19 @@ class TurtleImpl {
         return t;
     }
     rotate(radians: number): void {
-        // We want to make a new xform that sends the origin to the same turtle point, 
-        // and sends +X to the newly rotated turtle forward vector.
-        // This has something to do with the gyr[a,b] operator and commutative xforms, but
-        // I haven't figured that out yet.
-
-        // I'm guessing this is what I want:
-        const newxf= this.xform.compose(Xform.rotate(radians));
-        this.xform = newxf;
+        this.xform = this.xform.compose(Xform.rotate(radians));
     }
     forward(distance: number): void {
-        // figure out the turtle point
-        let start = this.xform.xform(Complex.zero);
-        let rawEnd = HypCanvas.polar(distance, 0);
-        let end = this.xform.xform(rawEnd);
+        // start point of line
+        const start = this.xform.xform(Complex.zero);
+        // origin-local end point of line.
+        const rawEnd = HypCanvas.polar(distance, 0);
+        const fwd = Xform.originToPoint(rawEnd);
+        const newXform = this.xform.compose(fwd);
+        // end point of line
+        const end = newXform.xform(Complex.zero);
         this.canvas.addLine(start, end);
-
-        // need the new turtle xform.
-        // it sends -rawEnd to start, origin to end, and -end to origin.
-        this.xform = Xform.threePoint(rawEnd.neg(), Complex.zero, end.neg(), start, end, Complex.zero);
-        console.log('new xform: ', this.xform);
+        this.xform = newXform;
     }
 
 }

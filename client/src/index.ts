@@ -34,7 +34,7 @@ if (newdatabutton) {
     };
 }
 
-const hc = new HypCanvas({ size: 999 });
+const hc = new HypCanvas({ size: 500 });
 document.body.appendChild(hc.makeCanvas());
 
 if (false) {
@@ -60,7 +60,7 @@ if (false) {
 
 {
     const deltaDist = 0.1;
-    const n = 1;
+    const n = 10;
     for (let i = 1; i <= n; i++)
     {  // trace some incomplete squares, 
         const t = hc.turtle();
