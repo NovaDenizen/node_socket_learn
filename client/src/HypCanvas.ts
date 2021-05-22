@@ -46,6 +46,7 @@ export default class HypCanvas {
     draw() {
         //console.log("redrawing, with %d lines", this.lines.length);
         const canvas = this.canvas;
+        console.log(canvas);
         if (!canvas) {
             return;
         }
@@ -132,8 +133,8 @@ export default class HypCanvas {
         if (!a || !b) {
             throw 'bad drawLine';
         }
-        const amag = a.magSq();
-        if (a.magSq() < 0.0001 || b.magSq() < 0.0001) { 
+        const amagsq = a.magSq();
+        if (amagsq < 0.0001 || b.magSq() < 0.0001) { 
             // a point is at the origin, so it's just a straight line.
             this.drawSimpleDiscLine(context, a, b);
             return;
@@ -141,7 +142,7 @@ export default class HypCanvas {
         // the circuler inversion of a
         // by some mystical mathematical mystery, this point (and the inversion of b)
         // are both on the orthoganlly intersecting circle that passes through a and b.
-        const c = a.scale(1 / a.magSq());
+        const c = a.scale(1 / amagsq);
         // c.mag() === 1/a.mag()
 
         // checking if a, b, and c are collinear.  This will happen if a and b are on the
@@ -183,23 +184,29 @@ export default class HypCanvas {
 
 export interface Turtle {
     readonly canvas: HypCanvas;
+    readonly penIsDown: boolean;
     clone(): Turtle;
     rotate(radians: number): void;
     forward(distance: number): void;
+    penUp(): void;
+    penDown(): void;
 }
 
 class TurtleImpl {
     readonly canvas: HypCanvas;
+    penIsDown: boolean;
     // sends the origin and the +x vector to the turtle location and forward vector.
     xform: Xform;
     constructor(canvas: HypCanvas) {
         this.canvas = canvas;;
         this.xform = Xform.identity;
+        this.penIsDown = false;
         Object.seal(this);
     }
     clone(): Turtle {
         let t = new TurtleImpl(this.canvas);
         t.xform = this.xform;
+        t.penIsDown = this.penIsDown;
         return t;
     }
     rotate(radians: number): void {
@@ -212,10 +219,18 @@ class TurtleImpl {
         const rawEnd = HypCanvas.polar(distance, 0);
         const fwd = Xform.originToPoint(rawEnd);
         const newXform = this.xform.compose(fwd);
-        // end point of line
-        const end = newXform.xform(Complex.zero);
-        this.canvas.addLine(start, end);
+        if (this.penIsDown) {
+            // end point of line
+            const end = newXform.xform(Complex.zero);
+            this.canvas.addLine(start, end);
+        }
         this.xform = newXform;
+    }
+    penDown() {
+        this.penIsDown = true;
+    }
+    penUp() {
+        this.penIsDown = false;
     }
 
 }

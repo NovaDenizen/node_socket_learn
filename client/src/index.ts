@@ -66,6 +66,7 @@ if (false) {
         const t = hc.turtle();
         const d = i * deltaDist;
         const turn = Math.PI/2;
+        t.penDown();
         t.forward(d);
         t.rotate(turn);
         t.forward(d);
