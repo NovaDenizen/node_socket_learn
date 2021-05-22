@@ -56,8 +56,35 @@ export default class HypCanvas {
         return this.canvas;
     }
     private input(handler: string, ev: any): any {
-        // this is noisy.
-        //console.log("got event on %s", handler, ev);
+        if (handler === 'mousemove') {
+            if (ev.buttons == 0) {
+                // no buttons are down, so don't do anything.
+                return;
+            } 
+            if (ev.movementX == 0 && ev.movementY == 0) {
+                // no movement, don't do anything
+                return;
+            }
+            console.log("got mousemove ", ev);
+            const screenEnd = { x: ev.clientX, y: ev.clientY };
+            const screenStart = { x: screenEnd.x - ev.movementX, y: screenEnd.y - ev.movementY };
+            let discStart = this.xyToComplex(screenStart);
+            let discEnd = this.xyToComplex(screenEnd);
+            if (discStart.magSq() > 1) { 
+                // clamp it to disc
+                discStart = discStart.scale(0.999/discStart.mag());
+            }
+            if (discEnd.magSq() > 1) { 
+                // clamp it to disc
+                discEnd = discEnd.scale(0.999/discEnd.mag());
+            }
+            this.view = this.view.compose(Xform.pointToOrigin(discStart))
+                                 .compose(Xform.originToPoint(discEnd));
+            console.log("new view", this.view);
+            this.postRedraw();
+        } else {
+            //console.log("got unhandled event on %s", handler, ev);
+        }
     }
     private draw() {
         //console.log("redrawing, with %d lines", this.lines.length);
@@ -93,11 +120,17 @@ export default class HypCanvas {
             this.drawDiscArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
             //this.drawSimpleDiscLine(context, e.from, e.to);
         }
+        this.pendingRedraw = false;
     }
     private complexToXY(c: Complex): { x: number, y: number } {
         const x = (1 + c.a)*this.size/2;
         const y = (1 - c.b)*this.size/2;
         return { x, y };
+    }
+    private xyToComplex(p: { x: number, y: number }): Complex {
+        const a = p.x * 2 / this.size - 1;
+        const b = 1 - p.y * 2 / this.size;
+        return new Complex(a,b);
     }
     private drawSimpleDiscLine(context: CanvasRenderingContext2D, a: Complex, b: Complex) {
         context.beginPath();

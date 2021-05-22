@@ -37,7 +37,9 @@ export default class Xform {
         this.b = b;
         this.c = c;
         this.d = d;
-        if (this.det().magSq() < 0.0000001) {
+        const detmag = this.det().magSq();
+        if (detmag < 0.0000001) {
+            console.error(`singular transform (${detmag}): `, this);
             throw "Xform.constructor: singular transform";
         }
         Object.freeze(this);
