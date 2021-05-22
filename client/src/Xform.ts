@@ -11,16 +11,34 @@ export default class Xform {
     readonly b: Complex;
     readonly c: Complex;
     readonly d: Complex;
+
     xform(discPoint: Complex): Complex {
-        return (discPoint.mul(this.a).add(this.b)).div(discPoint.mul(this.c).add(this.d));
+        const num = discPoint.mul(this.a).add(this.b);
+        const den = discPoint.mul(this.c).add(this.d);
+        const limit = 0.000001;
+        if (den.magSq() < limit) {
+            if (num.magSq() < limit) {
+                // use L'hopital
+                console.log("using lhopital", { thethis: this, discPoint });
+                return this.a.div(this.c);
+            } else {
+                console.trace('xform to infinity', { discPoint, num, den });
+                throw 'xform threw point to infinity';
+            }
+        }
+        return num.div(den);
     }
     constructor(a: Complex, b: Complex, c: Complex, d: Complex) {
         this.a = a;
         this.b = b;
         this.c = c;
         this.d = d;
+        if (this.det().magSq() < 0.0000001) {
+            throw 'Xform.constructor: singular transform';
+        }
         Object.freeze(this);
     }
+
     // this.compose(other).xform(x) === this.xform(other.xform(x))
     compose(other: Xform): Xform {
         // wikipedia tells me this is equivaent to matrix multiplication, but
@@ -39,6 +57,7 @@ export default class Xform {
     det(): Complex {
         return this.a.mul(this.d).sub(this.b.mul(this.c)); 
     }
+    // returns xform q such that q.compose(this) == this.compose(q) == identity
     invert(): Xform {
         /*
             Kramer's rule: when you want to find (x,y) such that
@@ -69,20 +88,60 @@ export default class Xform {
     }
     // creates a Xform that sends z1 to 0, z2 to 1, and z3 to ∞
     static zeroOneInf(z1: Complex, z2: Complex, z3: Complex): Xform {
-        return new Xform(
+        //console.log('zeroOneInf ', { z1, z2, z3 });
+        const limit = 0.000001;
+        // points need to be distinct
+        if (z1.sub(z2).magSq() < limit
+            || z1.sub(z3).magSq() < limit
+            || z2.sub(z3).magSq() < limit) 
+        {
+            throw 'zeroOneInf: nondistinct points';
+        }
+        const res = new Xform(
             z2.sub(z3),
             z1.mul(z2.sub(z3)).neg(),
             z2.sub(z1),
             z3.mul(z2.sub(z1)).neg()
         );
+        // z1: z1*(z2-z3) - (z1*(z2-z3))/... = 0
+        // z2: z2*(z2 - z3)- (z1*(z2-z3))/(z2*(z2-z1) - z3*(z2-z1))
+        //     (z2^2 - z2z3 - z1z2 + z1z3)/(z2^2 - z1z2 - z2z3 + z1z3)
+        //     1
+        // z3: .../(z3*(z2-z1) - z3*(z2-z1)) = .../0
+        if (true) { // check result
+            const z1t = res.xform(z1);
+            const z2t = res.xform(z2);
+            const z3tDen = res.c.mul(z3).add(res.d);
+            const limit = 0.001
+            if (z1t.magSq() > limit ||
+               z2t.sub(Complex.one).magSq() > limit ||
+               z3tDen.magSq() > limit) 
+            {
+               console.log('zeroOneInf error: ', { z1, z2, z3, res });
+               throw 'zerooneInf error';
+            }
+        }
+        return res;
     }
-    /// maps complex points z1, z2, z3 to w1, w2, w3
+    // maps complex points z1, z2, z3 to w1, w2, w3
     static threePoint(z1: Complex, z2: Complex, z3: Complex,
                       w1: Complex, w2: Complex, w3: Complex): Xform {
         let h1 = Xform.zeroOneInf(z1, z2, z3);
         let h2 = Xform.zeroOneInf(w1, w2, w3);
-        return h2.invert().compose(h1); // sends (z1, z2, z3) to (0,1,∞), then to (w1, w2, w3);
+        const res = h2.invert().compose(h1); // sends (z1, z2, z3) to (0,1,∞), then to (w1, w2, w3);
+
+        if (true) {
+            const limit = 0.001;
+            if (res.xform(z1).sub(w1).magSq() > limit
+               || res.xform(z2).sub(w2).magSq() > limit
+               || res.xform(z3).sub(w3).magSq() > limit) {
+               console.log('threePoint error: ', { z1, z2, z3, w1, w2, w3, res });
+               throw 'threePoint error';
+            }
+        }
+        return res;
     }
+
     // sends a point p to the origin, sends the origin to -p, 
     // and keeps the ideal points in line with p immobile
     static pointToOrigin(p: Complex): Xform {

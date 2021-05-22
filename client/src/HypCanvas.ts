@@ -215,17 +215,17 @@ class TurtleImpl {
     forward(distance: number): void {
         // figure out the turtle point
         let start = this.xform.xform(Complex.zero);
-        let rawEnd = HypCanvas.polar(0, distance);
+        let rawEnd = HypCanvas.polar(distance, 0);
         let end = this.xform.xform(rawEnd);
         this.canvas.addLine(start, end);
 
         // need the new turtle xform.
         // it sends -rawEnd to start, origin to end, and -end to origin.
         this.xform = Xform.threePoint(rawEnd.neg(), Complex.zero, end.neg(), start, end, Complex.zero);
+        console.log('new xform: ', this.xform);
     }
 
-};
-
+}
 
 
 function det(a: number, b: number, c: number, d: number): number {

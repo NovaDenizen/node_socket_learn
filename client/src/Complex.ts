@@ -2,16 +2,12 @@ export default class Complex {
     a: number;
     b: number;
     constructor(a?: number, b?: number) {
-        if (a !== undefined) {
-            this.a = a;
-        } else {
-            this.a = 0;
+        if (Number.isNaN(a) || Number.isNaN(b)) {
+            console.trace('got NaN in Complex constructor', { a, b });
+            throw "NaN's loaded into Complex";
         }
-        if (b !== undefined) {
-            this.b = b;
-        } else {
-            this.b = 0;
-        }
+        this.a = a || 0;
+        this.b = b || 0;
         Object.freeze(this);
     }
     toString(): string {
@@ -52,6 +48,10 @@ export default class Complex {
         return Math.sqrt(this.magSq());
     }
     invert(): Complex {
+        const mag2 = this.magSq();
+        if (mag2 < 0.0001) {
+            throw 'tried to invert Complex 0';
+        }
         const invMagSq = 1.0 / this.magSq();
         return new Complex(this.a * invMagSq, -this.b * invMagSq);
     }
