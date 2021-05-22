@@ -47,12 +47,10 @@ export default class HypCanvas {
             c.onmousedown = m => this.input('mousedown', m);
             c.onmouseup = m => this.input('mouseup', m);
             c.onmousemove = m => this.input('mousemove', m);
-            /*  don't care about touches right now
-                c.ontouchcancel = m => this.input('touchcancel', m);
-                c.ontouchend = m => this.input('touchend', m);
-                c.ontouchmove = m => this.input('touchmove', m);
-                c.ontouchstart = m => this.input('touchstart', m);
-            */
+                //c.ontouchcancel = m => this.input('touchcancel', m);
+            c.ontouchend = m => this.input('touchend', m);
+            c.ontouchmove = m => this.input('touchmove', m);
+            c.ontouchstart = m => this.input('touchstart', m);
         }
         this.postRedraw();
         return this.canvas;
