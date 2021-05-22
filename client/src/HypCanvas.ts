@@ -10,10 +10,11 @@ import Xform from "./Xform";
  * TODO: filled regions? paths?
  */
 export default class HypCanvas {
-    size: number;
-    canvas?: HTMLCanvasElement;
-    lines: {from: Complex, to: Complex}[];
-    pendingRedraw: boolean;
+    private size: number;
+    private canvas?: HTMLCanvasElement;
+    private lines: {from: Complex, to: Complex}[];
+    private pendingRedraw: boolean;
+    private view: Xform;
     get K() {
         return -1;
     }
@@ -22,9 +23,10 @@ export default class HypCanvas {
         this.lines = [];
         this.canvas = undefined;
         this.pendingRedraw = false;
+        this.view = Xform.identity;
         Object.seal(this);
     }
-    postRedraw() {
+    private postRedraw() {
         if (!this.pendingRedraw) {
             requestAnimationFrame(() => this.draw());
             this.pendingRedraw = true;
@@ -36,14 +38,28 @@ export default class HypCanvas {
     }
     makeCanvas(): HTMLCanvasElement {
         if (!this.canvas) {
-            this.canvas = document.createElement("canvas");
-            this.canvas.width = this.size;
-            this.canvas.height = this.size;
+            const c = document.createElement("canvas");
+            this.canvas = c;
+            c.width = this.size;
+            c.height = this.size;
+            c.onmousedown = m => this.input('mousedown', m);
+            c.onmouseup = m => this.input('mouseup', m);
+            c.onmousemove = m => this.input('mousemove', m);
+            /*  don't care about touches right now
+                c.ontouchcancel = m => this.input('touchcancel', m);
+                c.ontouchend = m => this.input('touchend', m);
+                c.ontouchmove = m => this.input('touchmove', m);
+                c.ontouchstart = m => this.input('touchstart', m);
+            */
         }
         this.postRedraw();
         return this.canvas;
     }
-    draw() {
+    private input(handler: string, ev: any): any {
+        // this is noisy.
+        //console.log("got event on %s", handler, ev);
+    }
+    private draw() {
         //console.log("redrawing, with %d lines", this.lines.length);
         const canvas = this.canvas;
         console.log(canvas);
@@ -74,16 +90,16 @@ export default class HypCanvas {
         console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             //console.log("drawing line ", e);
-            this.drawDiscArcLine(context, e.from, e.to);
+            this.drawDiscArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
             //this.drawSimpleDiscLine(context, e.from, e.to);
         }
     }
-    complexToXY(c: Complex): { x: number, y: number } {
+    private complexToXY(c: Complex): { x: number, y: number } {
         const x = (1 + c.a)*this.size/2;
         const y = (1 - c.b)*this.size/2;
         return { x, y };
     }
-    drawSimpleDiscLine(context: CanvasRenderingContext2D, a: Complex, b: Complex) {
+    private drawSimpleDiscLine(context: CanvasRenderingContext2D, a: Complex, b: Complex) {
         context.beginPath();
         const ascreen = this.complexToXY(a);
         context.moveTo(ascreen.x, ascreen.y);
@@ -92,7 +108,7 @@ export default class HypCanvas {
         context.closePath();
         context.stroke();
     }
-    drawShortDiscArc(context: CanvasRenderingContext2D, center: Complex, p1: Complex, p2: Complex) {
+    private drawShortDiscArc(context: CanvasRenderingContext2D, center: Complex, p1: Complex, p2: Complex) {
         const p1vec = p1.sub(center);
         const p2vec = p2.sub(center);
 
@@ -129,7 +145,7 @@ export default class HypCanvas {
         //context.closePath();
         context.stroke();
     }
-    drawDiscArcLine(context: CanvasRenderingContext2D, a?: Complex, b?: Complex) {
+    private drawDiscArcLine(context: CanvasRenderingContext2D, a?: Complex, b?: Complex) {
         if (!a || !b) {
             throw 'bad drawLine';
         }
@@ -196,7 +212,7 @@ class TurtleImpl {
     readonly canvas: HypCanvas;
     penIsDown: boolean;
     // sends the origin and the +x vector to the turtle location and forward vector.
-    xform: Xform;
+    private xform: Xform;
     constructor(canvas: HypCanvas) {
         this.canvas = canvas;;
         this.xform = Xform.identity;
