@@ -26,8 +26,8 @@ const cfg = new (class CFG {
     }
     httpsOptions(): object {
         return {
-            key: fs.readFileSync(path.join(this.CERT_PATH, 'file.pem')),
-            cert: fs.readFileSync(path.join(this.CERT_PATH, 'file.crt')),
+            key: fs.readFileSync(path.join(this.CERT_PATH, 'fullkeychain.pem')),
+            cert: fs.readFileSync(path.join(this.CERT_PATH, 'fullkeychain.pem')),
         };
     }
 })()
@@ -81,6 +81,9 @@ io.on('connection', (socket: socket_io.Socket) => {
     socket.on('getorigins', () => {
         console.log('got getorogins from ${socket.id}');
         send_origins(socket);
+    });
+    socket.on('clientlog', (msg: string) => {
+        console.log(`${socket.id}: ${msg}`);
     });
     socket.on('disconnect', () => {
         console.log(`disconnect from ${socket.id}`);

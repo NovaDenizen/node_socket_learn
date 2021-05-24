@@ -15,7 +15,8 @@ export default class HypCanvas {
     private lines: {from: Complex, to: Complex}[];
     private pendingRedraw: boolean;
     private view: Xform;
-    private touch?: { id: number, clientX: number, clientY: number };
+    private touch?: { id: number, x: number, y: number };
+    logger: (msg: string) => void;
     get K() {
         return -1;
     }
@@ -26,6 +27,7 @@ export default class HypCanvas {
         this.pendingRedraw = false;
         this.view = Xform.identity;
         this.touch = undefined;
+        this.logger = (msg) => { console.log(msg); };
         Object.seal(this);
     }
     private postRedraw() {
@@ -44,18 +46,18 @@ export default class HypCanvas {
             this.canvas = c;
             c.width = this.size;
             c.height = this.size;
-            c.onmousedown = m => this.input('mousedown', m);
-            c.onmouseup = m => this.input('mouseup', m);
-            c.onmousemove = m => this.input('mousemove', m);
-                //c.ontouchcancel = m => this.input('touchcancel', m);
-            c.ontouchend = m => this.input('touchend', m);
-            c.ontouchmove = m => this.input('touchmove', m);
-            c.ontouchstart = m => this.input('touchstart', m);
+            c.onmousedown = m => this.mouse_input('mousedown', m);
+            c.onmouseup = m => this.mouse_input('mouseup', m);
+            c.onmousemove = m => this.mouse_input('mousemove', m);
+            c.ontouchcancel = m => this.touch_input('touchcancel', m);
+            c.ontouchend = m => this.touch_input('touchend', m);
+            c.ontouchmove = m => this.touch_input('touchmove', m);
+            c.ontouchstart = m => this.touch_input('touchstart', m);
         }
         this.postRedraw();
         return this.canvas;
     }
-    private input(handler: string, ev: any): any {
+    private mouse_input(handler: string, ev: MouseEvent): any {
         if (handler === 'mousemove') {
             if (ev.buttons == 0) {
                 // no buttons are down, so don't do anything.
@@ -65,44 +67,62 @@ export default class HypCanvas {
             const screenStart = { x: screenEnd.x - ev.movementX, y: screenEnd.y - ev.movementY };
 
             this.doScreenMove(screenStart, screenEnd);
-        } else if (handler === 'touchstart') {
-            ev.preventDefault();
+        } 
+    }
+    private touch_input(handler: string, ev: TouchEvent) {
+        if (handler === 'touchstart') {
             if (this.touch) {
                 // we already have a touch, thank you very much.
                 return;
             }
-            let t = ev.changedTouches.item(0);
-            this.touch = { id: t.identifier, clientX: t.clientX, clientY: t.clientY };
-        } else if (handler === 'touchend') {
-            ev.preventDerfault();
-            if (!this.touch) {
-                // we don't have a touch, so we don't care
+            const t = ev.changedTouches.item(0);
+            if (t) {
+                this.touch = { id: t.identifier, x: t.clientX, y: t.clientY };
+            } else {
+                throw "I can't index arrays";
+            }
+            ev.preventDefault();
+        } else if ((handler === 'touchend') || (handler === 'touchcancel')) {
+            ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
+            if (this.touch === undefined) {
+                // We don't have a touch, so we don't care.
                 return;
             }
+            this.logger(`checking all ${ev.changedTouches.length} changed touches`);
+
             for (let i = 0; i < ev.changedTouches.length; i++) {
-                const t = ev.changedTouches.item(i);
+                this.logger(`${i}`);
+                const t = ev.changedTouches[i];
+                this.logger(`checking changedTouch[${i}] = ${JSON.stringify(t)}`);
                 if (t.identifier === this.touch.id) {
                     this.touch = undefined;
+                    this.logger(`touch is now ${JSON.stringify(this.touch)}`);
+                    ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
                     return; // we're done here.
                 }
             }
         } else if (handler === 'touchmove') {
-            ev.preventDefault();
+            ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
             if (!this.touch) {
                 // we don't have a touch, so we don't care
+                ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
                 return;
             }
             for (let i = 0; i < ev.changedTouches.length; i++) {
                 const t = ev.changedTouches.item(i);
-                if (t.identifier === this.touch.id) {
-                    this.doScreenMove({ x: this.touch.clientX, y: this.touch.clientY },
-                                      { x: t.clientX, y: t.clientY });
-                    this.touch.clientX = t.clientX;
-                    this.touch.clientY = t.clientY;
+                if (t) {
+                    if (t.identifier === this.touch.id) {
+                        this.doScreenMove({ x: this.touch.x, y: this.touch.y },
+                                          { x: t.clientX, y: t.clientY });
+                        this.touch.x = t.clientX;
+                        this.touch.y = t.clientY;
+                    }
+                } else {
+                    throw "I can't index arrays";
                 }
             }
         } else {
-            //console.log("got unhandled event on %s", handler, ev);
+            //this.logger(`got unhandled event ${handler}`);
         }
     }
     private doScreenMove(screenStart: { x: number, y: number}, screenEnd: { x: number, y: number}) {

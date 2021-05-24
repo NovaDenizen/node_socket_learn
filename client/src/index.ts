@@ -35,6 +35,7 @@ if (newdatabutton) {
 }
 
 const hc = new HypCanvas({ size: 500 });
+hc.logger = (s) => { socket.emit("clientlog", s); };
 document.body.appendChild(hc.makeCanvas());
 
 if (false) {

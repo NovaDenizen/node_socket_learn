@@ -1,5 +1,5 @@
-These are the commands I ran to make these files:
 
-  860  openssl genrsa 4096 > file.pem
-  861  openssl req -new -key file.pem -out csr.pem
-  862  openssl x509 -req -days 365 -in csr.pem -signkey file.pem -out file.crt
+I set up letsencrypt and it generated these files.
+
+
+
