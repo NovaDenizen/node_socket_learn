@@ -2,7 +2,7 @@ import Complex from "./Complex";
 import Xform from "./Xform";
 
 /**
- * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disc model.
+ * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disk model.
  *
  * TODO: enable different K
  * TODO: zoom
@@ -106,22 +106,22 @@ export default class HypCanvas {
         }
     }
     private doScreenMove(screenStart: { x: number, y: number}, screenEnd: { x: number, y: number}) {
-        let discStart = this.xyToComplex(screenStart);
-        let discEnd = this.xyToComplex(screenEnd);
+        let diskStart = this.xyToComplex(screenStart);
+        let diskEnd = this.xyToComplex(screenEnd);
 
-        //console.log("discStart ", discStart, " discEnd ", discEnd);
-        if (discStart.magSq() > 1) { 
-            // clamp it to disc
-            discStart = discStart.scale(0.999/discStart.mag());
+        //console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
+        if (diskStart.magSq() > 1) { 
+            // clamp it to disk
+            diskStart = diskStart.scale(0.999/diskStart.mag());
         }
-        if (discEnd.magSq() > 1) { 
-            // clamp it to disc
-            discEnd = discEnd.scale(0.999/discEnd.mag());
+        if (diskEnd.magSq() > 1) { 
+            // clamp it to disk
+            diskEnd = diskEnd.scale(0.999/diskEnd.mag());
         }
         let oToEnd, startToO, viewChange;
         try {
-            oToEnd = Xform.originToPoint(discEnd);
-            startToO = Xform.pointToOrigin(discStart);
+            oToEnd = Xform.originToPoint(diskEnd);
+            startToO = Xform.pointToOrigin(diskStart);
             viewChange = oToEnd.compose(startToO);
         } catch (err) {
             console.error('got singular transform building view change');
@@ -162,7 +162,7 @@ export default class HypCanvas {
         // set the stroke style to black
         context.strokeStyle = "#000";
 
-        // render the disc boundary
+        // render the disk boundary
         context.beginPath();
         context.arc(
             this.size / 2,
@@ -176,8 +176,8 @@ export default class HypCanvas {
         //console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             //console.log("drawing line ", e);
-            //this.drawDiscArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
-            this.drawSimpleDiscLine(context, this.view.xform(e.from), this.view.xform(e.to));
+            //this.drawDiskArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
+            this.drawSimpleDiskLine(context, this.view.xform(e.from), this.view.xform(e.to));
         }
         this.pendingRedraw = false;
     }
@@ -191,7 +191,7 @@ export default class HypCanvas {
         const b = 1 - p.y * 2 / this.size;
         return new Complex(a,b);
     }
-    private drawSimpleDiscLine(context: CanvasRenderingContext2D, a: Complex, b: Complex) {
+    private drawSimpleDiskLine(context: CanvasRenderingContext2D, a: Complex, b: Complex) {
         context.beginPath();
         const ascreen = this.complexToXY(a);
         context.moveTo(ascreen.x, ascreen.y);
@@ -200,7 +200,7 @@ export default class HypCanvas {
         context.closePath();
         context.stroke();
     }
-    private drawShortDiscArc(context: CanvasRenderingContext2D, center: Complex, p1: Complex, p2: Complex) {
+    private drawShortDiskArc(context: CanvasRenderingContext2D, center: Complex, p1: Complex, p2: Complex) {
         const p1vec = p1.sub(center);
         const p2vec = p2.sub(center);
 
@@ -237,14 +237,14 @@ export default class HypCanvas {
         //context.closePath();
         context.stroke();
     }
-    private drawDiscArcLine(context: CanvasRenderingContext2D, a?: Complex, b?: Complex) {
+    private drawDiskArcLine(context: CanvasRenderingContext2D, a?: Complex, b?: Complex) {
         if (!a || !b) {
             throw 'bad drawLine';
         }
         const amagsq = a.magSq();
         if (amagsq < 0.0001 || b.magSq() < 0.0001) { 
             // a point is at the origin, so it's just a straight line.
-            this.drawSimpleDiscLine(context, a, b);
+            this.drawSimpleDiskLine(context, a, b);
             return;
         }
         // the circuler inversion of a
@@ -264,20 +264,20 @@ export default class HypCanvas {
         const twiceabc = ac.a*ab.b - ac.b*ab.a;
         if (Math.abs(twiceabc) < 0.0001) {
             // points are collinear, draw a straight line
-            this.drawSimpleDiscLine(context, a, b);
+            this.drawSimpleDiskLine(context, a, b);
             return;
         }
         let center = findCenter(a, b, c);
-        this.drawShortDiscArc(context, center, a, b);
+        this.drawShortDiskArc(context, center, a, b);
     }
-    // takes a hyperbolic point in polar coordinates and xforms it into Poincare disc coordinate.
+    // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
     static polar(r: number, radians: number): Complex {
-        // if a point is at a distance r from the disc origin, then the distance d on the 
+        // if a point is at a distance r from the disk origin, then the distance d on the 
         // hyperbolic plane is d = 2 * arctanh(r)
         // d/2 = arctanh(r)
         // tanh(d/2) = r
-        const discR = Math.tanh(0.5 * r);
-        const res = new Complex(discR * Math.cos(radians), discR * Math.sin(radians));
+        const diskR = Math.tanh(0.5 * r);
+        const res = new Complex(diskR * Math.cos(radians), diskR * Math.sin(radians));
         //console.log(`polar(${r}, ${radians}) returns `, res);
         return res;
     }
