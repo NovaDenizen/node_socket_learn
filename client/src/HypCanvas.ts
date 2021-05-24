@@ -88,15 +88,15 @@ export default class HypCanvas {
                 // We don't have a touch, so we don't care.
                 return;
             }
-            this.logger(`checking all ${ev.changedTouches.length} changed touches`);
+            //this.logger(`checking all ${ev.changedTouches.length} changed touches`);
 
             for (let i = 0; i < ev.changedTouches.length; i++) {
-                this.logger(`${i}`);
+                //this.logger(`${i}`);
                 const t = ev.changedTouches[i];
-                this.logger(`checking changedTouch[${i}] = ${JSON.stringify(t)}`);
+                //this.logger(`checking changedTouch[${i}] = ${JSON.stringify(t)}`);
                 if (t.identifier === this.touch.id) {
                     this.touch = undefined;
-                    this.logger(`touch is now ${JSON.stringify(this.touch)}`);
+                    //this.logger(`touch is now ${JSON.stringify(this.touch)}`);
                     ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
                     return; // we're done here.
                 }
