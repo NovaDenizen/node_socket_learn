@@ -90,31 +90,79 @@ if (false) {
         e is the outer edge length
         E = 2pi/7, the pie-slice angle at the origin opposite e.
         G = pi/3, half the internal angle of the heptagon.
+            this is one of the equal pair of angles in the iscocelese slice triangle
 
         cos(2pi/7) = -cos(pi/3)cos(pi/3)) + sin(pi/3)sin(pi/3)cosh(e)
         cos(2pi/7) = -1/4 + 3/4*cosh(e)
         cosh(e) = (cos(2pi/7) + 1/4)/(3/4)
         e = arccosh((cos(2pi/7) + 1/4)/(3/4))
+
+        solving for r:
+            cos(pi/3) = -cos(pi/3)cos(2pi/7) + sin(pi/3)*sin(2pi/7)*cosh(r)
+            1/2 = -1/2 cos(2pi/7) + sqrt(3)/2 * sin(2pi/7)*cosh(r)
+            sqrt(3)/2*sin(2pi/7)*cosh(r) = 1/2 + 1/2*cos(2pi/7)
+            cosh(r) = (1/2 + 1/2 * cos(2pi/7))/(sqrt(3)/2 * sin(2*pi/7)
+                    = (1 + cos(2pi/7))/(sqrt(3)*sin(2*pi/7))
+            r = arccosh((1 + cos(2pi/7))/(sqrt(3)*sin(2*pi/7)))
 */
 
 {
-    let e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
-    let turn = Math.PI/3; // the external angle, not the internal angle
-    const t = hc.turtle();
-    t.penDown();
-    let heptagons: (depth: number, t: Turtle) => void;
-    heptagons = (depth: number, t: Turtle) => {
-        for (let i = 0; i < 7; i++) {
-            t.forward(e);
-            if (depth > 0) {
-                const t2 = t.clone();
-                t2.rotate(Math.PI);
-                heptagons(depth-1, t2);
+    const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
+    const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
+    const turn = Math.PI/3; // the external angle, not the internal angle
+    if (false) {
+        let heptagons: (depth: number, t: Turtle) => void;
+        heptagons = (depth: number, t: Turtle) => {
+            for (let i = 0; i < 7; i++) {
+                t.forward(e);
+                if (depth > 0) {
+                    const t2 = t.clone();
+                    t2.rotate(Math.PI);
+                    heptagons(depth-1, t2);
+                }
+                t.rotate(turn);
             }
-            t.rotate(turn);
         }
+        const t = hc.turtle();
+        t.penDown();
+        heptagons(3, t);
     }
-    heptagons(2, t);
+
+    if (true) {
+        let heptree: (depth: number, t: Turtle) => void;
+        heptree = (depth: number, t: Turtle) => {
+
+            const start = t.position();
+            t.forward(e);
+            const end = t.position();
+            if (HypCanvas.origin_metric(end) - HypCanvas.origin_metric(start) > 0.01) {
+                hc.addLine(start, end);
+                if (depth > 0) {
+                    {
+                        const t_1 = t.clone();
+                        t_1.rotate(Math.PI/3);
+                        heptree(depth-1, t_1);
+                    }
+                    {
+                        const t_2 = t.clone();
+                        t_2.rotate(-Math.PI/3);
+                        heptree(depth-1, t_2);
+                    }
+                }
+            } else {
+                t.forward(-e/2);
+                const halfend = t.position();
+                hc.addLine(start, halfend);
+            }
+        }
+        let d = 8;
+        let t = hc.turtle();
+        heptree(d, t.clone());
+        t.rotate(Math.PI*2/3);
+        heptree(d, t.clone());
+        t.rotate(Math.PI*2/3);
+        heptree(d, t.clone());
+    }
 }
 
 

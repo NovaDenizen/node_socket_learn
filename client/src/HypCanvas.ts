@@ -288,6 +288,16 @@ export default class HypCanvas {
     turtle(): Turtle {
         return new TurtleImpl(this);
     }
+    static metric(z1: Complex, z2: Complex): number {
+        const term_num = z1.sub(z2);
+        // if |z1| < 1 && |z2| < 1 then this is > 0
+        const term_den = Complex.one.sub(z1.mul(z2.complement()));
+        return 2*Math.atanh(term_num.mag() / term_den.mag());
+    }
+    static origin_metric(z: Complex): number {
+        return 2*Math.atanh(z.mag());
+    }
+
 }
 
 export { HypCanvas };
@@ -300,6 +310,7 @@ export interface Turtle {
     forward(distance: number): void;
     penUp(): void;
     penDown(): void;
+    position(): Complex;
 }
 
 class TurtleImpl {
@@ -342,7 +353,9 @@ class TurtleImpl {
     penUp() {
         this.penIsDown = false;
     }
-
+    position(): Complex {
+        return this.xform.xform(Complex.zero);
+    }
 }
 
 
