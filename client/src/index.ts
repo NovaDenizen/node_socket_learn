@@ -129,6 +129,8 @@ if (false) {
     }
 
     if (true) {
+        // Instead of cleverly drawing heptagons, I'm drawing 3 trees of heptagon edges.
+        // When an edge doesn't move farther away from the origin, we don't recurse.
         let heptree: (depth: number, t: Turtle) => void;
         heptree = (depth: number, t: Turtle) => {
 
@@ -150,9 +152,10 @@ if (false) {
                     }
                 }
             } else {
-                t.forward(-e/2);
-                const halfend = t.position();
-                hc.addLine(start, halfend);
+                // only draw a 'horizontal' edge when it goes ccw.
+                if (start.a*end.b - end.a*start.b > 0) {
+                    hc.addLine(start, end);
+                }
             }
         }
         let d = 8;
