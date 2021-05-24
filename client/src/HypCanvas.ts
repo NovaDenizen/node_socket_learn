@@ -176,8 +176,8 @@ export default class HypCanvas {
         //console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             //console.log("drawing line ", e);
-            this.drawDiscArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
-            //this.drawSimpleDiscLine(context, e.from, e.to);
+            //this.drawDiscArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
+            this.drawSimpleDiscLine(context, this.view.xform(e.from), this.view.xform(e.to));
         }
         this.pendingRedraw = false;
     }
