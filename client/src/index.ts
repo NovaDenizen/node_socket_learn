@@ -38,7 +38,7 @@ const hc = new HypCanvas({ size: 500 });
 hc.logger = (s) => { socket.emit("clientlog", s); };
 document.body.appendChild(hc.makeCanvas());
 
-if (false) {
+const drawSpiderweb = () => {
     const n = 30;
     const deltaR = 8 / n;
     let deltaTheta = Math.PI * 2 / n;
@@ -57,9 +57,9 @@ if (false) {
             hc.addLine(x, z);
         }
     }
-}
+};
 
-if (false) {
+const drawSimple = () => {
     // draw a few attempted euclidean squares
     const deltaDist = 0.1;
     const n = 10;
@@ -78,7 +78,7 @@ if (false) {
         t.forward(d);
         t.rotate(turn);
     }
-}
+};
 /*
     hyperbolic law of cosines (k=1):
         for any triangle with internal angles alpha, beta, gamma and side a opposite alpha:
@@ -107,67 +107,70 @@ if (false) {
             r = arccosh((1 + cos(2pi/7))/(sqrt(3)*sin(2*pi/7)))
 */
 
-{
+const drawSimleHeptagons = () => {
     const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
     const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
     const turn = Math.PI/3; // the external angle, not the internal angle
-    if (false) {
-        let heptagons: (depth: number, t: Turtle) => void;
-        heptagons = (depth: number, t: Turtle) => {
-            for (let i = 0; i < 7; i++) {
-                t.forward(e);
-                if (depth > 0) {
-                    const t2 = t.clone();
-                    t2.rotate(Math.PI);
-                    heptagons(depth-1, t2);
-                }
-                t.rotate(turn);
-            }
-        }
-        const t = hc.turtle();
-        t.penDown();
-        heptagons(3, t);
-    }
-
-    if (true) {
-        // Instead of cleverly drawing heptagons, I'm drawing 3 trees of heptagon edges.
-        // When an edge doesn't move farther away from the origin, we don't recurse.
-        let heptree: (depth: number, t: Turtle) => void;
-        heptree = (depth: number, t: Turtle) => {
-
-            const start = t.position();
+    let heptagons: (depth: number, t: Turtle) => void;
+    heptagons = (depth: number, t: Turtle) => {
+        for (let i = 0; i < 7; i++) {
             t.forward(e);
-            const end = t.position();
-            if (HypCanvas.origin_metric(end) - HypCanvas.origin_metric(start) > 0.01) {
-                hc.addLine(start, end);
-                if (depth > 0) {
-                    {
-                        const t_1 = t.clone();
-                        t_1.rotate(Math.PI/3);
-                        heptree(depth-1, t_1);
-                    }
-                    {
-                        const t_2 = t.clone();
-                        t_2.rotate(-Math.PI/3);
-                        heptree(depth-1, t_2);
-                    }
+            if (depth > 0) {
+                const t2 = t.clone();
+                t2.rotate(Math.PI);
+                heptagons(depth-1, t2);
+            }
+            t.rotate(turn);
+        }
+    }
+    const t = hc.turtle();
+    t.penDown();
+    heptagons(3, t);
+}
+
+const drawHeptagonEdgeTree = () => {
+    const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
+    const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
+    const turn = Math.PI/3; // the external angle, not the internal angle
+    // Instead of cleverly drawing heptagons, I'm drawing 3 trees of heptagon edges.
+    // When an edge doesn't move farther away from the origin, we don't recurse.
+    let heptree: (depth: number, t: Turtle) => void;
+    heptree = (depth: number, t: Turtle) => {
+
+        const start = t.position();
+        t.forward(e);
+        const end = t.position();
+        if (HypCanvas.origin_metric(end) - HypCanvas.origin_metric(start) > 0.01) {
+            hc.addLine(start, end);
+            if (depth > 0) {
+                {
+                    const t_1 = t.clone();
+                    t_1.rotate(Math.PI/3);
+                    heptree(depth-1, t_1);
                 }
-            } else {
-                // only draw a 'horizontal' edge when it goes ccw.
-                if (start.a*end.b - end.a*start.b > 0) {
-                    hc.addLine(start, end);
+                {
+                    const t_2 = t.clone();
+                    t_2.rotate(-Math.PI/3);
+                    heptree(depth-1, t_2);
                 }
             }
+        } else {
+            // only draw a 'horizontal' edge when it goes ccw.
+            if (start.a*end.b - end.a*start.b > 0) {
+                hc.addLine(start, end);
+            }
         }
-        let d = 8;
-        let t = hc.turtle();
-        heptree(d, t.clone());
-        t.rotate(Math.PI*2/3);
-        heptree(d, t.clone());
-        t.rotate(Math.PI*2/3);
-        heptree(d, t.clone());
     }
+    let d = 8;
+    let t = hc.turtle();
+    heptree(d, t.clone());
+    t.rotate(Math.PI*2/3);
+    heptree(d, t.clone());
+    t.rotate(Math.PI*2/3);
+    heptree(d, t.clone());
 }
+
+drawHeptagonEdgeTree();
 
 
 //console.log("index.ts is done");

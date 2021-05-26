@@ -196,8 +196,8 @@ export default class HypCanvas {
         //console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             //console.log("drawing line ", e);
-            //this.drawDiskArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
-            this.drawSimpleDiskLine(context, this.view.xform(e.from), this.view.xform(e.to));
+            this.drawDiskArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
+            //this.drawSimpleDiskLine(context, this.view.xform(e.from), this.view.xform(e.to));
         }
         this.pendingRedraw = false;
     }
@@ -262,16 +262,15 @@ export default class HypCanvas {
             throw 'bad drawLine';
         }
         const amagsq = a.magSq();
-        if (amagsq < 0.0001 || b.magSq() < 0.0001) { 
+        const bmagsq = b.magSq();
+        if (amagsq < 0.0001 || bmagsq < 0.0001) { 
             // a point is at the origin, so it's just a straight line.
             this.drawSimpleDiskLine(context, a, b);
             return;
         }
-        // the circuler inversion of a
-        // by some mystical mathematical mystery, this point (and the inversion of b)
-        // are both on the orthoganlly intersecting circle that passes through a and b.
-        const c = a.scale(1 / amagsq);
-        // c.mag() === 1/a.mag()
+        // Whichever one is closer to the origin, use its cirular inversion as the third point.
+        // This way, one of the endpoints can be an ideal point.
+        const c = (amagsq < bmagsq) ? a.scale(1/amagsq) : b.scale(1/bmagsq);
 
         // checking if a, b, and c are collinear.  This will happen if a and b are on the
         // same radius or opposite radii.
@@ -331,6 +330,7 @@ export interface Turtle {
     penUp(): void;
     penDown(): void;
     position(): Complex;
+    idealPosition(): Complex;
 }
 
 class TurtleImpl {
@@ -375,6 +375,9 @@ class TurtleImpl {
     }
     position(): Complex {
         return this.xform.xform(Complex.zero);
+    }
+    idealPosition(): Complex {
+        return this.xform.xform(Complex.one);
     }
 }
 
