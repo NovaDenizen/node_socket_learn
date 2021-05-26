@@ -86,13 +86,14 @@ export default class Xform {
 
                     = [ d   -b ] / q
                       [ -c   a ]
+
+                The '/q' is unnecessary sincd it divides out.  The Xform constructor normalizes that out.
          */
-        const invQ: Complex = this.det().invert();
         return new Xform(
-            this.d.mul(invQ),
-            this.b.neg().mul(invQ),
-            this.c.neg().mul(invQ),
-            this.a.mul(invQ)
+            this.d,
+            this.b.neg(),
+            this.c.neg(),
+            this.a
         );
     }
     // creates a Xform that sends z1 to 0, z2 to 1, and z3 to ∞
