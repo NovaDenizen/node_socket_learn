@@ -38,15 +38,6 @@ export default class Xform {
         Object.freeze(this);
     }
 
-    // this.compose(other).xform(x) === this.xform(other.xform(x))
-    /*
-    det(): Complex {
-        // t * [ 1   b ]
-        //     [ b_  1 ]
-        // so det is t*(1 - bb_)
-        // = t*(1 - |b|^2)
-        return this.t.scaled(1 - this.b.magSq());
-    }*/
     // returns xform q such that q.compose(this) == this.compose(q) == identity
     invert(): Xform {
         // this sends 0 to t*b
@@ -93,7 +84,7 @@ export default class Xform {
         // the composed xform sends 0 to p.
         const p = this.xform(other.xform(Complex.zero));
         // so res_t*res_b == p
-        // the composed xform sends a to 1
+        // the composed xform sends q to 1
         const q = other.inverseXform(this.inverseXform(Complex.one));
         // so [1]  res_t*(q + res_b) == (res_b_*q + 1)
         // also, |q| == 1 so 1/q == q_
@@ -104,14 +95,18 @@ export default class Xform {
         // res_t*q + p*res_t*res_t_ == p_*res_t*q + 1
         // res_t*q + p == p_*res_t*q + 1
         // res_t(q - p_*q) == 1 - p
-        // res_t == q_*(1 - p)/(1 - p_)
+        // [4] res_t == q_*(1 - p)/(1 - p_)
         // |p| < 1 and |1 - p| == |1 - p_| and |q| == 1 so |res_t| == 1.
         // let r = (1 - p)/|1 - p|, so |r| == 1
         // r_ = (1 - p_)/|1 - p|
-        // r/r_ = (1 - p)(1 - p_)
+        // r/r_ = (1 - p)/(1 - p_)
         // r*r_ = |r|^2 = 1, so 1/r_ == r
-        const oneMinusP = Complex.one.sub(p);
-        const r = oneMinusP.scale(1/oneMinusP.mag());
+        // [5] (1 - p)/(1 - p)) = r/r_ = r*r
+        // so, from [4] and 5
+        // res_t = q_*r*r
+        const r = Complex.one.sub(p).normalize();
+        // Mathematically speaking, this second normalize is redundant.
+        // Numerically speaking, it's necessary.
         const res_t = q.complement().mul(r).mul(r).normalize();
         const res_b = p.mul(res_t.complement());
         return new Xform(res_b, res_t);
