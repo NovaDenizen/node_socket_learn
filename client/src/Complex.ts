@@ -60,8 +60,7 @@ export default class Complex {
         return new Complex(this.a, -this.b);
     }
     normalize(): Complex {
-        const invMag = 1.0 / this.mag();
-        return new Complex(this.a * invMag, this.b * invMag);
+        return this.scale(1 / this.mag());
     }
     neg(): Complex {
         return new Complex(-this.a, -this.b);
