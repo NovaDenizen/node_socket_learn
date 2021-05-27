@@ -40,6 +40,10 @@ export default class HypCanvas {
         this.lines = []
         this.postRedraw();
     }
+    reset() {
+        this.view = Xform.identity;
+        this.clear();
+    }
     makeCanvas(): HTMLCanvasElement {
         if (!this.canvas) {
             const c = document.createElement("canvas");
@@ -316,7 +320,6 @@ export default class HypCanvas {
     static origin_metric(z: Complex): number {
         return 2*Math.atanh(z.mag());
     }
-
 }
 
 export { HypCanvas };

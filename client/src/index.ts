@@ -37,10 +37,12 @@ if (newdatabutton) {
 const hc = new HypCanvas({ size: 500 });
 hc.logger = (s) => { socket.emit("clientlog", s); };
 document.body.appendChild(hc.makeCanvas());
+const p = document.createElement("p");
 
 const drawSpiderweb = () => {
-    const n = 30;
-    const deltaR = 8 / n;
+    const n = 10;
+    const deltaR = 3 / n;
+    hc.reset();
     let deltaTheta = Math.PI * 2 / n;
     for (let ri = 1; ri < n; ri++) {
         for (let thetai = 0; thetai < n; thetai++) {
@@ -59,10 +61,21 @@ const drawSpiderweb = () => {
     }
 };
 
+const makebutton = (name: string, call: () => void) => {
+    const b = document.createElement("input");
+    b.value = name;
+    b.type = "button";
+    b.onclick = call;
+    p.appendChild(b);
+}
+makebutton("spiderweb", drawSpiderweb);
+
+
 const drawSimple = () => {
     // draw a few attempted euclidean squares
     const deltaDist = 0.1;
     const n = 10;
+    hc.reset();
     for (let i = 1; i <= n; i++)
     {  // trace some incomplete squares, 
         const t = hc.turtle();
@@ -79,6 +92,8 @@ const drawSimple = () => {
         t.rotate(turn);
     }
 };
+makebutton("Simple", drawSimple);
+
 /*
     hyperbolic law of cosines (k=1):
         for any triangle with internal angles alpha, beta, gamma and side a opposite alpha:
@@ -107,10 +122,11 @@ const drawSimple = () => {
             r = arccosh((1 + cos(2pi/7))/(sqrt(3)*sin(2*pi/7)))
 */
 
-const drawSimleHeptagons = () => {
+const drawSimpleHeptagons = () => {
     const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
     const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
     const turn = Math.PI/3; // the external angle, not the internal angle
+    hc.reset();
     let heptagons: (depth: number, t: Turtle) => void;
     heptagons = (depth: number, t: Turtle) => {
         for (let i = 0; i < 7; i++) {
@@ -127,11 +143,13 @@ const drawSimleHeptagons = () => {
     t.penDown();
     heptagons(3, t);
 }
+makebutton("Slow hepts", drawSimpleHeptagons);
 
 const drawHeptagonEdgeTree = () => {
     const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
     const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
     const turn = Math.PI/3; // the external angle, not the internal angle
+    hc.reset();
     // Instead of cleverly drawing heptagons, I'm drawing 3 trees of heptagon edges.
     // When an edge doesn't move farther away from the origin, we don't recurse.
     let heptree: (depth: number, t: Turtle) => void;
@@ -169,8 +187,12 @@ const drawHeptagonEdgeTree = () => {
     t.rotate(Math.PI*2/3);
     heptree(d, t.clone());
 }
+makebutton("Fast hepts", drawHeptagonEdgeTree);
 
-drawHeptagonEdgeTree();
+document.body.appendChild(p);
+
+//drawHeptagonEdgeTree();
+drawSpiderweb();
 
 
 //console.log("index.ts is done");
