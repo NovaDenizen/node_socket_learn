@@ -74,7 +74,6 @@ class DiskRenderingContext {
         }
         return this.ctx2d;
     }
-        
     reset() {
 
         const width = this.htmlCanvas.width || 500;
@@ -146,6 +145,10 @@ class DiskRenderingContext {
             this.drawSreenArc(center, a, b);
         }
     }
+    beginPath(): void {
+        this.ctx().beginPath();
+        this.firstPathPoint = this.lastPathPoint;
+    }
     stroke() {
         this.ctx().stroke();
     }
@@ -181,7 +184,7 @@ class MoveTo implements RenderInst {
 }
 class LineTo implements RenderInst {
     p: Complex;
-    constructor(p) {
+    constructor(p: Complex) {
         this.p = p;
     }
     exec(ctx: DiskRenderingContext): void {
@@ -192,7 +195,6 @@ class BeginPath implements RenderInst {
     constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.beginPath();
-        path.firstPoint = path.lastPoint;
     }
 }
 class Stroke implements RenderInst {
@@ -205,7 +207,7 @@ class Stroke implements RenderInst {
 export default class HypCanvas {
     private size: number;
     private canvas?: HTMLCanvasElement;
-    private insts: [RenderInst];
+    private insts: Array<RenderInst>;
 
     private pendingRedraw: boolean;
     private view: Xform;
@@ -216,7 +218,7 @@ export default class HypCanvas {
     }
     constructor(opts?: any) {
         this.size = opts?.size || 500;
-        this.insts = [];
+        this.insts = [];;
         this.canvas = undefined;
         this.pendingRedraw = false;
         this.view = Xform.identity;
@@ -231,7 +233,7 @@ export default class HypCanvas {
         }
     }
     clear() {
-        this.instructions = []
+        this.insts = [];
         this.postRedraw();
     }
     reset() {
@@ -367,7 +369,7 @@ export default class HypCanvas {
         if (!canvas) {
             return;
         }
-        const drc = new DiskRenderingContext(this);
+        const drc = new DiskRenderingContext(this, canvas);
         drc.reset();
         for (const i of this.insts) {
             i.exec(drc);
@@ -395,7 +397,10 @@ export default class HypCanvas {
         return res;
     }
     addLine(p1: Complex, p2: Complex) {
-        this.lines.push({ from: p1, to: p2});
+        this.insts.push(new BeginPath());
+        this.insts.push(new MoveTo(p1));
+        this.insts.push(new LineTo(p2));
+        this.insts.push(new Stroke())
         this.postRedraw();
     }
     turtle(): Turtle {
