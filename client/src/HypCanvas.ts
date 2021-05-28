@@ -48,14 +48,14 @@ class DiskRenderingContext {
     private view: Xform;
     constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: Xform) {
         this.hypCanvas = hypCanvas;
-        this.firstPathPoint = Complex.zero;
-        this.lastPathPoint = Complex.zero;
         const width = htmlCanvas.width || 500;
         const height = htmlCanvas.height || 500;
         this.yOffset = height/2;
         this.xOffset = width/2;
         this.view = view;
         this.scale = Math.min(this.xOffset, this.yOffset);
+        this.firstPathPoint = this.viewed(Complex.zero);
+        this.lastPathPoint = this.firstPathPoint;
         const ctx = htmlCanvas.getContext("2d");
         if (!ctx) {
             throw new Error("couldn't create CanvasRenderingContext2D");
@@ -77,9 +77,6 @@ class DiskRenderingContext {
     }
 
     private viewed(p: Complex): Complex {
-        if (!this.view) {
-            throw new Error("trying to render with no view");
-        }
         return this.view.xform(p);
     }
     private ctx(): CanvasRenderingContext2D {
@@ -130,13 +127,13 @@ class DiskRenderingContext {
         // c.a = (g*a.b - b.b*h)/det
         // c.b = (b.a*h - a.a*g)/det
         const det = (b.a*a.b) - (a.a*b.b);
-        if (Math.abs(det) < 0.00001) {
+        if (Math.abs(det) < 10.00001) {
             this.drawScreenLine(a, b);
         } else {
             let g = (1 + b.magSq())/2;
             let h = (1 + a.magSq())/2;
             let center = new Complex((g*a.b - b.b*h)/det, (b.a*h - a.a*g)/det);
-            this.drawSreenArc(center, a, b);
+            this.drawScreenArc(center, a, b);
         }
     }
     beginPath(): void {
@@ -151,7 +148,7 @@ class DiskRenderingContext {
         const sb = this.toScreen(b);
         this.ctx().lineTo(sb.x, sb.y);
     }
-    private drawSreenArc(center: Complex, p1: Complex, p2: Complex) {
+    private drawScreenArc(center: Complex, p1: Complex, p2: Complex) {
         const p1vec = p1.sub(center);
         const radius = p1vec.mag() * this.scale;
 
