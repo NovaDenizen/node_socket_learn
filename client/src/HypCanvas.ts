@@ -308,8 +308,7 @@ export default class HypCanvas {
         // d/2 = arctanh(r)
         // tanh(d/2) = r
         const diskR = Math.tanh(0.5 * r);
-        const res = new Complex(diskR * Math.cos(radians), diskR * Math.sin(radians));
-        // console.log(`polar(${r}, ${radians}) returns `, res);
+        const res = Complex.unit(radians).scale(diskR);
         return res;
     }
     addLine(p1: Complex, p2: Complex) {
