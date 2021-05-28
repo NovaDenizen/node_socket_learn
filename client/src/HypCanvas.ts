@@ -10,11 +10,202 @@ import Xform from "./Xform";
  * TODO: zoom
  * TODO: Model/view separation
  * TODO: filled regions? paths?
+ * TODO: strokes, stroke and fill styles
+    going to do it the same as CanvasRenderingContext2D.
+    penDown(), penUp(), put turtle into pen mode, every line is drawn as the turtle moves.
+    beginPath() puts turtle into path mode.  Moves are stored up.  stroke(), fill(), strokeStyle, 
+    fillstyle, closePath() all need to be on the turtle.
+    current path needs to be stored on the turtle.
+    Maybe the best way to do it is with an instruction model.
+    pen mode forward() adds a [MOVE_TO, BEGIN_PATH, LINE_TO, STROKE] sequence.
+    setting a stroke style adds a "SET_STROKE_STYLE" instruction.  Similar with SET_FILL_STYLE.
+    Not sure what to do with ideal points.  Maybe check if both endpoints on a line are ideal, then go 
+    counterclockwise around the edge to connect them.  closePath() will need to handle this.
  */
+
+/*
+
+This is not adequate.
+There sure are a lot of remember-and-replay stages involved here.
+
+We need a record of all drawing instructions stored in a view-independent manner, 
+so that when the view changes we can rerun them to draw the current display in the
+new view xform.
+
+We need a DiskRenderingContext that consumes straight-line operations like a 
+CanvasRenderingContext2D, applies a view xform, turns the line into a screen-coordinate arc, 
+and calls CanvasRenderingContext2D.arcTo().
+
+*/
+class DiskRenderingContext {
+    private hypCanvas: HypCanvas;
+    private htmlCanvas: HTMLCanvasElement;
+    private firstPathPoint: Complex;
+    private lastPathPoint: Complex;
+    private xOffset: number;
+    private yOffset: number;
+    private scale: number;
+    private ctx2d: CanvasRenderingContext2D | null;
+    private view: Xform | null;
+    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement) {
+        this.hypCanvas = hypCanvas;
+        this.htmlCanvas = htmlCanvas;
+        this.firstPathPoint = Complex.zero;
+        this.lastPathPoint = Complex.zero;
+        const width = htmlCanvas.width;
+        const height = htmlCanvas.height;;
+        this.yOffset = height/2;
+        this.xOffset = width/2;
+        this.scale = Math.min(this.xOffset, this.yOffset);
+        this.ctx2d = null;
+        this.view = null;
+        this.reset();
+    }
+
+    private viewed(p: Complex): Complex {
+        if (!this.view) {
+            throw new Error("trying to render with no view");
+        }
+        return this.view.xform(p);
+    }
+    private ctx(): CanvasRenderingContext2D {
+        if (!this.ctx2d) {
+            throw new Error("couldn't create canvas context");
+        }
+        return this.ctx2d;
+    }
+        
+    reset() {
+
+        const width = this.htmlCanvas.width || 500;
+        const height = this.htmlCanvas.height || 500;
+        this.yOffset = height/2;
+        this.xOffset = width/2;
+        this.scale = Math.min(this.xOffset, this.yOffset);
+
+        // set the stroke style to black
+        this.ctx2d = this.htmlCanvas.getContext("2d");
+        const c = this.ctx();
+        c.strokeStyle = "#000";
+        c.fillStyle = "#eee";
+        c.beginPath();
+        c.arc(this.xOffset, this.yOffset, this.scale, 0, Math.PI*2);
+        c.closePath();
+        c.stroke();
+        c.fill();
+        c.fillStyle = "#000"; // resetting it.
+    }
+    toScreen(p: Complex): { x: number, y: number } {
+        const x = p.a * this.scale + this.xOffset;
+        const y = -p.b * this.scale + this.yOffset;
+        return { x, y };
+    }
+    moveTo(p: Complex) {
+        const xp = this.viewed(p);
+        const sp = this.toScreen(xp);
+        this.ctx().moveTo(sp.x, sp.y);
+        this.lastPathPoint = xp;
+    }
+    lineTo(p: Complex) {
+        const a = this.lastPathPoint;
+        const b = this.viewed(p);
+        this.lastPathPoint = b;
+
+        // looking for center c (and possibly r, radius of circle at c).
+        // |c - a| = |c - b| = r
+        // the right triangle formed by the segment connecting the centers and an intersection point
+        // satisfies |c|^2 = 1 + r^2
+        // (c - a)(c_ - a_) = r^2
+        // (c - b)(c_ - b_) = r^2
+        // cc_ = 1 + r^2
+        // cc_ - cb_ - bc_ + bb_ = r^2
+        // 1 + bb_ - (bc_ + cb_) = 0
+        // 1 + bb_ = bc_ + cb_
+        // sidebar:   (bc_ + cb_) looks simplifiable
+        //        let b = w + xi
+        //        let c = y + zi
+        //        (w + xi)(y - zi) + (y + zi)(w - xi)
+        //        (wy - wzi + xyi + xz) + (wy - xyi + wzi + xz)
+        //        (2wy + 2xz)
+        //        It's like a double dot product. 2*|b||c|cos(angle)
+        // 2*(b.a*c.a + b.b*c.b) = 1 + bb_
+        // 2*(a.a*c.a + a.b*c.b) = 1 + aa_
+        // b.a*c.a + b.b*c.b = (1 + bb_)/2 = g
+        // a.a*c.a + a.b*c.b = (1 + aa_)/2 = h
+        // det = (b.a*a.b) - (a.a*b.b)
+        // if a and b and origin are collinear (or either a or b are the origin), then det = 0.
+        // c.a = (g*a.b - b.b*h)/det
+        // c.b = (b.a*h - a.a*g)/det
+        const det = (b.a*a.b) - (a.a*b.b);
+        if (Math.abs(det) < 0.00001) {
+            this.drawScreenLine(a, b);
+        } else {
+            let g = (1 + b.magSq())/2;
+            let h = (1 + a.magSq())/2;
+            let center = new Complex((g*a.b - b.b*h)/det, (b.a*h - a.a*g)/det);
+            this.drawSreenArc(center, a, b);
+        }
+    }
+    stroke() {
+        this.ctx().stroke();
+    }
+
+    private drawScreenLine(a: Complex, b: Complex) {
+        const sb = this.toScreen(b);
+        this.ctx().lineTo(sb.x, sb.y);
+    }
+    private drawSreenArc(center: Complex, p1: Complex, p2: Complex) {
+        const p1vec = p1.sub(center);
+        const radius = p1vec.mag() * this.scale;
+
+        const p1s: { x: number, y: number } = this.toScreen(p1);
+        const p2s: { x: number, y: number } = this.toScreen(p2);
+        const origins = this.toScreen(Complex.zero);
+        // the first control point is, luckily enough, the center of the disk.
+        // The second control point is the second point.
+        this.ctx().arcTo(origins.x, origins.y, p2s.x, p2s.y, radius);
+    }
+}
+
+interface RenderInst {
+    exec(ctx: DiskRenderingContext): void;
+}
+class MoveTo implements RenderInst {
+    p: Complex;
+    constructor(p: Complex) {
+        this.p = p;
+    }
+    exec(ctx: DiskRenderingContext): void {
+        ctx.moveTo(this.p);
+    }
+}
+class LineTo implements RenderInst {
+    p: Complex;
+    constructor(p) {
+        this.p = p;
+    }
+    exec(ctx: DiskRenderingContext): void {
+        ctx.lineTo(this.p);
+    }
+}
+class BeginPath implements RenderInst {
+    constructor() {}
+    exec(ctx: DiskRenderingContext): void {
+        ctx.beginPath();
+        path.firstPoint = path.lastPoint;
+    }
+}
+class Stroke implements RenderInst {
+    constructor() {}
+    exec(ctx: DiskRenderingContext): void {
+        ctx.stroke();
+    }
+}
+
 export default class HypCanvas {
     private size: number;
     private canvas?: HTMLCanvasElement;
-    private lines: {from: Complex, to: Complex}[];
+    private insts: [RenderInst];
 
     private pendingRedraw: boolean;
     private view: Xform;
@@ -25,7 +216,7 @@ export default class HypCanvas {
     }
     constructor(opts?: any) {
         this.size = opts?.size || 500;
-        this.lines = [];
+        this.insts = [];
         this.canvas = undefined;
         this.pendingRedraw = false;
         this.view = Xform.identity;
@@ -40,7 +231,7 @@ export default class HypCanvas {
         }
     }
     clear() {
-        this.lines = []
+        this.instructions = []
         this.postRedraw();
     }
     reset() {
@@ -176,34 +367,10 @@ export default class HypCanvas {
         if (!canvas) {
             return;
         }
-        const context = canvas.getContext("2d");
-        if (!context) {
-            throw new Error("couldn't create canvas context");
-        }
-        context.clearRect(0, 0, canvas.width || 0, canvas.height || 0);
-
-        // set the stroke style to black
-        context.strokeStyle = "#000";
-        context.fillStyle = "#eee";
-
-        // render the disk boundary
-        context.beginPath();
-        context.arc(
-            this.size / 2,
-            this.size / 2,
-            this.size / 2,
-            0,
-            Math.PI * 2
-        );
-        context.closePath();
-        context.stroke();
-        context.fill();
-        context.fillStyle = "#000"; // resetting it.
-        // console.log("HypCanvas.draw(): ", this.lines);
-        for (const e of this.lines) {
-            // console.log("drawing line ", e);
-            this.drawDiskArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
-            // this.drawSimpleDiskLine(context, this.view.xform(e.from), this.view.xform(e.to));
+        const drc = new DiskRenderingContext(this);
+        drc.reset();
+        for (const i of this.insts) {
+            i.exec(drc);
         }
         this.pendingRedraw = false;
     }
@@ -216,96 +383,6 @@ export default class HypCanvas {
         const a = p.x * 2 / this.size - 1;
         const b = 1 - p.y * 2 / this.size;
         return new Complex(a,b);
-    }
-    private drawSimpleDiskLine(context: CanvasRenderingContext2D, a: Complex, b: Complex) {
-        context.beginPath();
-        const ascreen = this.complexToXY(a);
-        context.moveTo(ascreen.x, ascreen.y);
-        const bscreen = this.complexToXY(b);
-        context.lineTo(bscreen.x, bscreen.y);
-        context.closePath();
-        context.stroke();
-    }
-    private drawShortDiskArc(context: CanvasRenderingContext2D, center: Complex, p1: Complex, p2: Complex) {
-        const p1vec = p1.sub(center);
-        const p2vec = p2.sub(center);
-
-
-        // cross product of v1 x v2 is |v1|*|v2|*sin(angle from v1 to v2)
-        // so its sign tells us the short arc direction
-        const cross = p1vec.a*p2vec.b - p1vec.b*p2vec.a;
-        // arc is going to go from start to end
-        let start;
-        let end;
-        if (cross > 0) {
-            start = p1vec;
-            end = p2vec;
-        } else {
-            start = p2vec;
-            end = p1vec;
-        }
-        // console.log("start: ", start);
-        // console.log("end: ", end);
-
-        const startangle = Math.atan2(start.b, start.a);
-        const endangle = Math.atan2(end.b, end.a);
-        // console.log("startangle: ", startangle, " endangle: ", endangle);
-
-        // so far, all these calculations have bene in sane complex right-handed coordinates (+y is up)
-        // Now we go into the realm of raster coordinates and clockwise angles.
-        // +y goes down.  Angles are measuered *clockwise* from the right.
-        const centerScreen = this.complexToXY(center);
-        const radius = start.mag();
-        const screenRadius = radius * this.size/2;
-
-        context.beginPath();
-        // the 'true' on the end is the 'counterclockwise' parameter
-        context.arc(centerScreen.x, centerScreen.y, screenRadius, -startangle, -endangle, true);
-        // context.closePath();
-        context.stroke();
-    }
-    private drawDiskArcLine(context: CanvasRenderingContext2D, a?: Complex, b?: Complex) {
-        if (!a || !b) {
-            throw new Error('bad drawLine');
-        }
-        // looking for center c (and possibly r, radius of circle at c).
-        // |c - a| = |c - b| = r
-        // the right triangle formed by the segment connecting the centers and an intersection point
-        // satisfies |c|^2 = 1 + r^2
-        // (c - a)(c_ - a_) = r^2
-        // (c - b)(c_ - b_) = r^2
-        // cc_ = 1 + r^2
-        // cc_ - cb_ - bc_ + bb_ = r^2
-        // 1 + bb_ - (bc_ + cb_) = 0
-        // 1 + bb_ = bc_ + cb_
-        // sidebar:   (bc_ + cb_) looks simplifiable
-        //        let b = w + xi
-        //        let c = y + zi
-        //        (w + xi)(y - zi) + (y + zi)(w - xi)
-        //        (wy - wzi + xyi + xz) + (wy - xyi + wzi + xz)
-        //        (2wy + 2xz)
-        //        It's like a double dot product. 2*|b||c|cos(angle)
-        // 2*(b.a*c.a + b.b*c.b) = 1 + bb_
-        // 2*(a.a*c.a + a.b*c.b) = 1 + aa_
-        // b.a*c.a + b.b*c.b = (1 + bb_)/2 = g
-        // a.a*c.a + a.b*c.b = (1 + aa_)/2 = h
-        // det = (b.a*a.b) - (a.a*b.b)
-        // if a and b and origin are collinear (or either a or b are the origin), then det = 0.
-        // c.a = (g*a.b - b.b*h)/det
-        // c.b = (b.a*h - a.a*g)/det
-        const det = (b.a*a.b) - (a.a*b.b);
-        if (Math.abs(det) < 0.00001) {
-            this.drawSimpleDiskLine(context, a, b);
-            return;
-        }
-        let g = (1 + b.magSq())/2;
-        let h = (1 + a.magSq())/2;
-        let center = new Complex((g*a.b - b.b*h)/det, (b.a*h - a.a*g)/det);
-        this.drawShortDiskArc(context, center, a, b);
-
-
-
-        this.drawShortDiskArc(context, center, a, b);
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
     static polar(r: number, radians: number): Complex {
