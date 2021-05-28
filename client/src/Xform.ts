@@ -82,33 +82,31 @@ export default class Xform {
     // res.xform(p) == this.xform(other.xform(p))
     compose(other: Xform): Xform {
         // the composed xform sends 0 to p.
+        // t*b = p
         const p = this.xform(other.xform(Complex.zero));
-        // so res_t*res_b == p
-        // the composed xform sends q to 1
-        const q = other.inverseXform(this.inverseXform(Complex.one));
-        // so [1]  res_t*(q + res_b) == (res_b_*q + 1)
-        // also, |q| == 1 so 1/q == q_
-        // [2] res_b = p/res_t = p* res_t_
-        // [3] res_b_ = p_ * res_t
-        // we can substitute [2] and[3] into [1] now.
-        // res_t*(q + p*res_t_) == (p_*res_t*q + 1)
-        // res_t*q + p*res_t*res_t_ == p_*res_t*q + 1
-        // res_t*q + p == p_*res_t*q + 1
-        // res_t(q - p_*q) == 1 - p
-        // [4] res_t == q_*(1 - p)/(1 - p_)
-        // |p| < 1 and |1 - p| == |1 - p_| and |q| == 1 so |res_t| == 1.
-        // let r = (1 - p)/|1 - p|, so |r| == 1
-        // r_ = (1 - p_)/|1 - p|
-        // r/r_ = (1 - p)/(1 - p_)
-        // r*r_ = |r|^2 = 1, so 1/r_ == r
-        // [5] (1 - p)/(1 - p)) = r/r_ = r*r
-        // so, from [4] and 5
-        // res_t = q_*r*r
-        const r = Complex.one.sub(p).normalize();
-        // Mathematically speaking, this second normalize is redundant.
-        // Numerically speaking, it's necessary.
-        const t = q.complement().mul(r).mul(r).normalize();
-        const b = p.mul(res_t.complement());
+        // the composed xform sends 1 to q
+        // t*(1 + b)/(b_ + 1) = q
+        const q = this.xform(other.xform(Complex.one))
+        // p/q = b(b_ + 1)/(1 + b)
+        //     = (bb_ + b)(1 + b)
+        // since |t| = 1, |b| = |p| and bb_ = pp_
+        // p/q = (pp_ + b)/(1 + b)
+        // |q| = 1, so 1/q = q_
+        // pq_ = (pp_- 1 + 1 + b)/(1 + b)
+        // pq_ = (pp_ - 1)/(1 + b) + 1
+        // (pq_ - 1) = (pp_ - 1)/(1 + b)
+        // (1 + b) = (pp_ - 1)/(pq_ - 1)
+        // b = (pp_ - 1 - pq_ + 1)/(pq_ - 1)
+        // b = (pp_ - pq_)/(pq_ - 1)
+        // b = p(q_ - p_)/(1 - pq_)
+        // t*b = p
+        // t = p/b;
+        // t = (1 - pq_)/(q_ - p_)
+        // since qq_ = 1, multiply by q/q
+        // t = (q - p)/(1 - p_q)
+        const t = q.sub(p).div(Complex.one.sub(p.complement().mul(q))).normalize();
+        // b = p/t = p*t_
+        const b = p.mul(t.complement());
         return new Xform(b, t);
     }
 

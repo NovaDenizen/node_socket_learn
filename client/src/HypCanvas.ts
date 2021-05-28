@@ -94,8 +94,12 @@ export default class HypCanvas {
             }
             // this.logger(`checking all ${ev.changedTouches.length} changed touches`);
 
-            for (for const t of ev.changedTouches) {
+            for (let i = 0; i < ev.changedTouches.length; i++) {
+                const t = ev.changedTouches.item(i);
                 // this.logger(`checking changedTouch[${i}] = ${JSON.stringify(t)}`);
+                if (!t) {
+                    throw new Error("ev.changedTouches isn't working");
+                }
                 if (t.identifier === this.touch.id) {
                     this.touch = undefined;
                     // this.logger(`touch is now ${JSON.stringify(this.touch)}`);
@@ -246,7 +250,7 @@ export default class HypCanvas {
         // +y goes down.  Angles are measuered *clockwise* from the right.
         const centerScreen = this.complexToXY(center);
         const radius = start.mag();
-        const screenRadius = r * this.size/2;
+        const screenRadius = radius * this.size/2;
 
         context.beginPath();
         // the 'true' on the end is the 'counterclockwise' parameter
