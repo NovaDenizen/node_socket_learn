@@ -1,6 +1,8 @@
 import Complex from "./Complex";
 import Xform from "./Xform";
 
+
+
 /**
  * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disk model.
  *
@@ -13,6 +15,7 @@ export default class HypCanvas {
     private size: number;
     private canvas?: HTMLCanvasElement;
     private lines: {from: Complex, to: Complex}[];
+
     private pendingRedraw: boolean;
     private view: Xform;
     private touch?: { id: number, x: number, y: number };

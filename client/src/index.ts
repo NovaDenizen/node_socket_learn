@@ -1,4 +1,5 @@
 import socket_client from "socket.io-client";
+import Complex from "./Complex";
 import { HypCanvas, Turtle } from "./HypCanvas";
 
 const x = new HypCanvas();
@@ -61,14 +62,14 @@ const drawSpiderweb = () => {
     }
 };
 
-const makebutton = (name: string, call: () => void) => {
+const makeButton = (name: string, call: () => void) => {
     const b = document.createElement("input");
     b.value = name;
     b.type = "button";
     b.onclick = call;
     p.appendChild(b);
 }
-makebutton("spiderweb", drawSpiderweb);
+makeButton("spiderweb", drawSpiderweb);
 
 
 const drawSimple = () => {
@@ -92,7 +93,7 @@ const drawSimple = () => {
         t.rotate(turn);
     }
 };
-makebutton("Simple", drawSimple);
+makeButton("Simple", drawSimple);
 
 /*
     hyperbolic law of cosines (k=1):
@@ -143,7 +144,7 @@ const drawSimpleHeptagons = () => {
     t.penDown();
     heptagons(3, t);
 }
-makebutton("Slow hepts", drawSimpleHeptagons);
+makeButton("Slow hepts", drawSimpleHeptagons);
 
 const drawHeptagonEdgeTree = () => {
     const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
@@ -187,7 +188,21 @@ const drawHeptagonEdgeTree = () => {
     t.rotate(Math.PI*2/3);
     heptree(d, t.clone());
 }
-makebutton("Fast hepts", drawHeptagonEdgeTree);
+makeButton("Fast hepts", drawHeptagonEdgeTree);
+
+const drawInfinityPie = () => {
+    hc.reset();
+    const slices = 12;
+    const angle = Math.PI*2/slices;
+    const t = hc.turtle();
+    for (let i = 0; i < slices; i++) {
+        let dest = t.idealPosition();
+        hc.addLine(Complex.zero, dest);
+        t.rotate(angle);
+    }
+};
+makeButton("Infinity Pie", drawInfinityPie);
+
 
 document.body.appendChild(p);
 
