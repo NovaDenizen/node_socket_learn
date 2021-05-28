@@ -158,7 +158,7 @@ class DiskRenderingContext {
 
         const p1s: { x: number, y: number } = this.toScreen(p1);
         const p2s: { x: number, y: number } = this.toScreen(p2);
-        const centers = this.toScreen(Complex.zero);
+        const centers = this.toScreen(center);
         // these are the sane normal angles where 0 is +x and +angle goes CCW
         const saneStartAngle = Math.atan2(p1vec.b, p1vec.a);
         const saneEndAngle = Math.atan2(p2vec.b, p2vec.a);
