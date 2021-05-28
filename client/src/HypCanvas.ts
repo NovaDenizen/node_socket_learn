@@ -262,32 +262,43 @@ export default class HypCanvas {
         if (!a || !b) {
             throw new Error('bad drawLine');
         }
-        const amagsq = a.magSq();
-        const bmagsq = b.magSq();
-        if (amagsq < 0.0001 || bmagsq < 0.0001) {
-            // a point is at the origin, so it's just a straight line.
+        // looking for center c (and possibly r, radius of circle at c).
+        // |c - a| = |c - b| = r
+        // the right triangle formed by the segment connecting the centers and an intersection point
+        // satisfies |c|^2 = 1 + r^2
+        // (c - a)(c_ - a_) = r^2
+        // (c - b)(c_ - b_) = r^2
+        // cc_ = 1 + r^2
+        // cc_ - cb_ - bc_ + bb_ = r^2
+        // 1 + bb_ - (bc_ + cb_) = 0
+        // 1 + bb_ = bc_ + cb_
+        // sidebar:   (bc_ + cb_) looks simplifiable
+        //        let b = w + xi
+        //        let c = y + zi
+        //        (w + xi)(y - zi) + (y + zi)(w - xi)
+        //        (wy - wzi + xyi + xz) + (wy - xyi + wzi + xz)
+        //        (2wy + 2xz)
+        //        It's like a double dot product. 2*|b||c|cos(angle)
+        // 2*(b.a*c.a + b.b*c.b) = 1 + bb_
+        // 2*(a.a*c.a + a.b*c.b) = 1 + aa_
+        // b.a*c.a + b.b*c.b = (1 + bb_)/2 = g
+        // a.a*c.a + a.b*c.b = (1 + aa_)/2 = h
+        // det = (b.a*a.b) - (a.a*b.b)
+        // if a and b and origin are collinear (or either a or b are the origin), then det = 0.
+        // c.a = (g*a.b - b.b*h)/det
+        // c.b = (b.a*h - a.a*g)/det
+        const det = (b.a*a.b) - (a.a*b.b);
+        if (Math.abs(det) < 0.00001) {
             this.drawSimpleDiskLine(context, a, b);
             return;
         }
-        // Whichever one is closer to the origin, use its cirular inversion as the third point.
-        // This way, one of the endpoints can be an ideal point.
-        const c = (amagsq < bmagsq) ? a.scale(1/amagsq) : b.scale(1/bmagsq);
+        let g = (1 + b.magSq())/2;
+        let h = (1 + a.magSq())/2;
+        let center = new Complex((g*a.b - b.b*h)/det, (b.a*h - a.a*g)/det);
+        this.drawShortDiskArc(context, center, a, b);
 
-        // checking if a, b, and c are collinear.  This will happen if a and b are on the
-        // same radius or opposite radii.
 
-        // vector from a to b
-        const ab = b.sub(a);
-        // vector from a to c
-        const ac = c.sub(a);
-        // twice the area of the triangle abc
-        const twiceabc = ac.a*ab.b - ac.b*ab.a;
-        if (Math.abs(twiceabc) < 0.0001) {
-            // points are collinear, draw a straight line
-            this.drawSimpleDiskLine(context, a, b);
-            return;
-        }
-        const center = findCenter(a, b, c);
+
         this.drawShortDiskArc(context, center, a, b);
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.

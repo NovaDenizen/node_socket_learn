@@ -70,7 +70,7 @@ export default class Xform {
         // multiply num and denom by (1 - q*b_)
         //   == (q - b + b(1 - q*b_))/(b_*(q - b) + (1 - q*b_))
         //   == (q - b + b - qbb_)/(b_q - bb_ + 1 - qb_)
-        //  == (1 - qbb_)/(1 - bb_)
+        //  == q(1 - bb_)/(1 - bb_)
         //  == q
         // r = (q - b)/(1 - q*b_) works.
         const r = q.sub(this.b).div(Complex.one.sub(q.mul(this.b.complement())));
