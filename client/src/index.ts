@@ -142,7 +142,7 @@ const drawSimpleHeptagons = () => {
     }
     const t = hc.turtle();
     t.penDown();
-    heptagons(3, t);
+    heptagons(0, t);
 }
 makeButton("Slow hepts", drawSimpleHeptagons);
 

@@ -39,27 +39,41 @@ and calls CanvasRenderingContext2D.arcTo().
 */
 class DiskRenderingContext {
     private hypCanvas: HypCanvas;
-    private htmlCanvas: HTMLCanvasElement;
     private firstPathPoint: Complex;
     private lastPathPoint: Complex;
     private xOffset: number;
     private yOffset: number;
     private scale: number;
-    private ctx2d: CanvasRenderingContext2D | null;
-    private view: Xform | null;
-    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement) {
+    private ctx2d: CanvasRenderingContext2D;
+    private view: Xform;
+    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: Xform) {
         this.hypCanvas = hypCanvas;
-        this.htmlCanvas = htmlCanvas;
         this.firstPathPoint = Complex.zero;
         this.lastPathPoint = Complex.zero;
-        const width = htmlCanvas.width;
-        const height = htmlCanvas.height;;
+        const width = htmlCanvas.width || 500;
+        const height = htmlCanvas.height || 500;
         this.yOffset = height/2;
         this.xOffset = width/2;
+        this.view = view;
         this.scale = Math.min(this.xOffset, this.yOffset);
-        this.ctx2d = null;
-        this.view = null;
-        this.reset();
+        const ctx = htmlCanvas.getContext("2d");
+        if (!ctx) {
+            throw new Error("couldn't create CanvasRenderingContext2D");
+        }
+        this.ctx2d = ctx;
+    }
+    clear() {
+        // set the stroke style to black
+        const c = this.ctx();
+        c.clearRect(0, 0, this.xOffset*2, this.yOffset*2);
+        c.strokeStyle = "#000";
+        c.fillStyle = "#eee";
+        c.beginPath();
+        c.arc(this.xOffset, this.yOffset, this.scale, 0, Math.PI*2);
+        c.closePath();
+        c.stroke();
+        c.fill();
+        c.fillStyle = "#000"; // resetting it.
     }
 
     private viewed(p: Complex): Complex {
@@ -73,26 +87,6 @@ class DiskRenderingContext {
             throw new Error("couldn't create canvas context");
         }
         return this.ctx2d;
-    }
-    reset() {
-
-        const width = this.htmlCanvas.width || 500;
-        const height = this.htmlCanvas.height || 500;
-        this.yOffset = height/2;
-        this.xOffset = width/2;
-        this.scale = Math.min(this.xOffset, this.yOffset);
-
-        // set the stroke style to black
-        this.ctx2d = this.htmlCanvas.getContext("2d");
-        const c = this.ctx();
-        c.strokeStyle = "#000";
-        c.fillStyle = "#eee";
-        c.beginPath();
-        c.arc(this.xOffset, this.yOffset, this.scale, 0, Math.PI*2);
-        c.closePath();
-        c.stroke();
-        c.fill();
-        c.fillStyle = "#000"; // resetting it.
     }
     toScreen(p: Complex): { x: number, y: number } {
         const x = p.a * this.scale + this.xOffset;
@@ -369,8 +363,8 @@ export default class HypCanvas {
         if (!canvas) {
             return;
         }
-        const drc = new DiskRenderingContext(this, canvas);
-        drc.reset();
+        const drc = new DiskRenderingContext(this, canvas, this.view);
+        drc.clear();
         for (const i of this.insts) {
             i.exec(drc);
         }
@@ -397,6 +391,7 @@ export default class HypCanvas {
         return res;
     }
     addLine(p1: Complex, p2: Complex) {
+        this.logger(`addLine(${p1}, ${p2})`);
         this.insts.push(new BeginPath());
         this.insts.push(new MoveTo(p1));
         this.insts.push(new LineTo(p2));
