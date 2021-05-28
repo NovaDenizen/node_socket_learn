@@ -6,9 +6,9 @@ import Complex from "./Complex";
 // This implementation is in denial about the point at infinity.  Hopefully this won't matter.
 // zeroOneInf() uses it conceptually, but as far as I can tell I'll never need to actually use the
 // point at infinity and incur the cost of the extra bookkeeping that entails.
-// 
+//
 // According to wikipedia (
-//     The subgroup of all Möbius transformations that map the open disk D = z : |z| < 1 to 
+//     The subgroup of all Möbius transformations that map the open disk D = z : |z| < 1 to
 //     itself consists of all transformations of the form
 //       f(z) = e^(iϕ)(z + b)(b.compement()*z + 1)
 //
@@ -45,7 +45,7 @@ export default class Xform {
         // So we want a xform that sends
         //        1  t*b to 0
         //        2  0 to -b
-        // 
+        //
         // from 1:
         // t*b + new_b == 0
         // new_b == -t*b
@@ -107,9 +107,9 @@ export default class Xform {
         const r = Complex.one.sub(p).normalize();
         // Mathematically speaking, this second normalize is redundant.
         // Numerically speaking, it's necessary.
-        const res_t = q.complement().mul(r).mul(r).normalize();
-        const res_b = p.mul(res_t.complement());
-        return new Xform(res_b, res_t);
+        const t = q.complement().mul(r).mul(r).normalize();
+        const b = p.mul(res_t.complement());
+        return new Xform(b, t);
     }
 
     // sends a point p to the origin, sends the origin to -p,
@@ -122,7 +122,7 @@ export default class Xform {
     }
     // Creates a Xform that rotates counterclockwise about the origin by the given radians
     static rotate(theta: number): Xform {
-        let r = Complex.unit(theta);
+        const r = Complex.unit(theta);
         return new Xform(Complex.zero, r);
     }
     static readonly identity: Xform = new Xform(Complex.zero, Complex.one);

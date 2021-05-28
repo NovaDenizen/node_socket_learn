@@ -3,8 +3,7 @@ export default class Complex {
     b: number;
     constructor(a?: number, b?: number) {
         if (Number.isNaN(a) || Number.isNaN(b)) {
-            console.trace('got NaN in Complex constructor', { a, b });
-            throw "NaN's loaded into Complex";
+            throw new Error("NaN's loaded into Complex");
         }
         this.a = a || 0;
         this.b = b || 0;

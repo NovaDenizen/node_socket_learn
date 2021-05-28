@@ -27,7 +27,7 @@ export default class HypCanvas {
         this.pendingRedraw = false;
         this.view = Xform.identity;
         this.touch = undefined;
-        this.logger = (msg) => { console.log(msg); };
+        this.logger = (msg) => { /* nothing */ };
         Object.seal(this);
     }
     private postRedraw() {
@@ -63,15 +63,15 @@ export default class HypCanvas {
     }
     private mouse_input(handler: string, ev: MouseEvent): any {
         if (handler === 'mousemove') {
-            if (ev.buttons == 0) {
+            if (ev.buttons === 0) {
                 // no buttons are down, so don't do anything.
                 return;
-            } 
+            }
             const screenEnd = { x: ev.clientX, y: ev.clientY };
             const screenStart = { x: screenEnd.x - ev.movementX, y: screenEnd.y - ev.movementY };
 
             this.doScreenMove(screenStart, screenEnd);
-        } 
+        }
     }
     private touch_input(handler: string, ev: TouchEvent) {
         if (handler === 'touchstart') {
@@ -83,7 +83,7 @@ export default class HypCanvas {
             if (t) {
                 this.touch = { id: t.identifier, x: t.clientX, y: t.clientY };
             } else {
-                throw "I can't index arrays";
+                throw new Error("I can't index arrays");
             }
             ev.preventDefault();
         } else if ((handler === 'touchend') || (handler === 'touchcancel')) {
@@ -92,15 +92,13 @@ export default class HypCanvas {
                 // We don't have a touch, so we don't care.
                 return;
             }
-            //this.logger(`checking all ${ev.changedTouches.length} changed touches`);
+            // this.logger(`checking all ${ev.changedTouches.length} changed touches`);
 
-            for (let i = 0; i < ev.changedTouches.length; i++) {
-                //this.logger(`${i}`);
-                const t = ev.changedTouches[i];
-                //this.logger(`checking changedTouch[${i}] = ${JSON.stringify(t)}`);
+            for (for const t of ev.changedTouches) {
+                // this.logger(`checking changedTouch[${i}] = ${JSON.stringify(t)}`);
                 if (t.identifier === this.touch.id) {
                     this.touch = undefined;
-                    //this.logger(`touch is now ${JSON.stringify(this.touch)}`);
+                    // this.logger(`touch is now ${JSON.stringify(this.touch)}`);
                     ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
                     return; // we're done here.
                 }
@@ -122,37 +120,35 @@ export default class HypCanvas {
                         this.touch.y = t.clientY;
                     }
                 } else {
-                    throw "I can't index arrays";
+                    throw new Error("I can't index arrays");
                 }
             }
         } else {
-            //this.logger(`got unhandled event ${handler}`);
+            // this.logger(`got unhandled event ${handler}`);
         }
     }
     private doScreenMove(screenStart: { x: number, y: number}, screenEnd: { x: number, y: number}) {
         let diskStart = this.xyToComplex(screenStart);
         let diskEnd = this.xyToComplex(screenEnd);
 
-        //console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
-        if (diskStart.magSq() > 1) { 
+        // console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
+        if (diskStart.magSq() > 1) {
             // clamp it to disk
             diskStart = diskStart.scale(0.999/diskStart.mag());
         }
-        if (diskEnd.magSq() > 1) { 
+        if (diskEnd.magSq() > 1) {
             // clamp it to disk
             diskEnd = diskEnd.scale(0.999/diskEnd.mag());
         }
-        let oToEnd, startToO, viewChange;
+        let oToEnd;
+        let startToO;
+        let viewChange;
         try {
             oToEnd = Xform.originToPoint(diskEnd);
             startToO = Xform.pointToOrigin(diskStart);
             viewChange = oToEnd.compose(startToO);
         } catch (err) {
-            console.error('got singular transform building view change');
-            console.log('oToEnd ', oToEnd);
-            console.log('startToO ', startToO);
-            console.log('viewChange ', viewChange);
-            throw err;
+            throw new Error('got singular transform building view change');
         }
 
         let newView;
@@ -160,26 +156,22 @@ export default class HypCanvas {
         try {
             newView = viewChange.compose(this.view);
         } catch (err) {
-            console.error('Got singular transform while prepending view change');
-            console.log('view: ', this.view);
-            console.log('viewChange: ', viewChange);
-            throw err;
+            throw new Error("Got singular transform while prepending view change");
         }
         this.view = newView;
-        //console.log("new view", this.view);
+        // console.log("new view", this.view);
         this.postRedraw();
     }
     private draw() {
-        //console.log("redrawing, with %d lines", this.lines.length);
+        // console.log("redrawing, with %d lines", this.lines.length);
         const canvas = this.canvas;
-        //console.log(canvas);
+        // console.log(canvas);
         if (!canvas) {
             return;
         }
         const context = canvas.getContext("2d");
         if (!context) {
-            console.error("couldn't create canvas context"); 
-            return 
+            throw new Error("couldn't create canvas context");
         }
         context.clearRect(0, 0, canvas.width || 0, canvas.height || 0);
 
@@ -197,11 +189,11 @@ export default class HypCanvas {
         );
         context.closePath();
         context.stroke();
-        //console.log("HypCanvas.draw(): ", this.lines);
+        // console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
-            //console.log("drawing line ", e);
+            // console.log("drawing line ", e);
             this.drawDiskArcLine(context, this.view.xform(e.from), this.view.xform(e.to));
-            //this.drawSimpleDiskLine(context, this.view.xform(e.from), this.view.xform(e.to));
+            // this.drawSimpleDiskLine(context, this.view.xform(e.from), this.view.xform(e.to));
         }
         this.pendingRedraw = false;
     }
@@ -233,7 +225,8 @@ export default class HypCanvas {
         // so its sign tells us the short arc direction
         const cross = p1vec.a*p2vec.b - p1vec.b*p2vec.a;
         // arc is going to go from start to end
-        let start, end;
+        let start;
+        let end;
         if (cross > 0) {
             start = p1vec;
             end = p2vec;
@@ -241,33 +234,33 @@ export default class HypCanvas {
             start = p2vec;
             end = p1vec;
         }
-        //console.log("start: ", start);
-        //console.log("end: ", end);
+        // console.log("start: ", start);
+        // console.log("end: ", end);
 
         const startangle = Math.atan2(start.b, start.a);
         const endangle = Math.atan2(end.b, end.a);
-        //console.log("startangle: ", startangle, " endangle: ", endangle);
+        // console.log("startangle: ", startangle, " endangle: ", endangle);
 
         // so far, all these calculations have bene in sane complex right-handed coordinates (+y is up)
         // Now we go into the realm of raster coordinates and clockwise angles.
         // +y goes down.  Angles are measuered *clockwise* from the right.
         const centerScreen = this.complexToXY(center);
-        const r = start.mag();
-        const screen_r = r * this.size/2;
+        const radius = start.mag();
+        const screenRadius = r * this.size/2;
 
         context.beginPath();
         // the 'true' on the end is the 'counterclockwise' parameter
-        context.arc(centerScreen.x, centerScreen.y, screen_r, -startangle, -endangle, true);
-        //context.closePath();
+        context.arc(centerScreen.x, centerScreen.y, screenRadius, -startangle, -endangle, true);
+        // context.closePath();
         context.stroke();
     }
     private drawDiskArcLine(context: CanvasRenderingContext2D, a?: Complex, b?: Complex) {
         if (!a || !b) {
-            throw 'bad drawLine';
+            throw new Error('bad drawLine');
         }
         const amagsq = a.magSq();
         const bmagsq = b.magSq();
-        if (amagsq < 0.0001 || bmagsq < 0.0001) { 
+        if (amagsq < 0.0001 || bmagsq < 0.0001) {
             // a point is at the origin, so it's just a straight line.
             this.drawSimpleDiskLine(context, a, b);
             return;
@@ -279,7 +272,7 @@ export default class HypCanvas {
         // checking if a, b, and c are collinear.  This will happen if a and b are on the
         // same radius or opposite radii.
 
-        // vector from a to b 
+        // vector from a to b
         const ab = b.sub(a);
         // vector from a to c
         const ac = c.sub(a);
@@ -290,18 +283,18 @@ export default class HypCanvas {
             this.drawSimpleDiskLine(context, a, b);
             return;
         }
-        let center = findCenter(a, b, c);
+        const center = findCenter(a, b, c);
         this.drawShortDiskArc(context, center, a, b);
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
     static polar(r: number, radians: number): Complex {
-        // if a point is at a distance r from the disk origin, then the distance d on the 
+        // if a point is at a distance r from the disk origin, then the distance d on the
         // hyperbolic plane is d = 2 * arctanh(r)
         // d/2 = arctanh(r)
         // tanh(d/2) = r
         const diskR = Math.tanh(0.5 * r);
         const res = new Complex(diskR * Math.cos(radians), diskR * Math.sin(radians));
-        //console.log(`polar(${r}, ${radians}) returns `, res);
+        // console.log(`polar(${r}, ${radians}) returns `, res);
         return res;
     }
     addLine(p1: Complex, p2: Complex) {
@@ -312,10 +305,10 @@ export default class HypCanvas {
         return new TurtleImpl(this);
     }
     static metric(z1: Complex, z2: Complex): number {
-        const term_num = z1.sub(z2);
+        const termNumerator = z1.sub(z2);
         // if |z1| < 1 && |z2| < 1 then this is > 0
-        const term_den = Complex.one.sub(z1.mul(z2.complement()));
-        return 2*Math.atanh(term_num.mag() / term_den.mag());
+        const termDenominator = Complex.one.sub(z1.mul(z2.complement()));
+        return 2*Math.atanh(termNumerator.mag() / termDenominator.mag());
     }
     static origin_metric(z: Complex): number {
         return 2*Math.atanh(z.mag());
@@ -348,7 +341,7 @@ class TurtleImpl {
         Object.seal(this);
     }
     clone(): Turtle {
-        let t = new TurtleImpl(this.canvas);
+        const t = new TurtleImpl(this.canvas);
         t.xform = this.xform;
         t.penIsDown = this.penIsDown;
         return t;
@@ -413,10 +406,10 @@ function findCenter(a: Complex, b: Complex, c: Complex): Complex {
     const y = (c3.magSq() - 0.25)/(2*c3.b);
 
     if (false) { // check intermediate answer
-        let adistsq = 0.5*0.5 + y*y;
-        let cdistsq = c3.a*c3.a + (y - c3.b)*(y - c3.b);
+        const adistsq = 0.5*0.5 + y*y;
+        const cdistsq = c3.a*c3.a + (y - c3.b)*(y - c3.b);
         if (Math.abs(adistsq - cdistsq) > 0.01) {
-            throw `y was bad: adistsq=${adistsq}, cdistsq=${cdistsq}`
+            throw new Error(`y was bad: adistsq=${adistsq}, cdistsq=${cdistsq}`);
         }
     }
 
@@ -430,12 +423,12 @@ function findCenter(a: Complex, b: Complex, c: Complex): Complex {
     const center = center1.add(a);
     if (false) { // check final answer
         // check radii
-        let ra = center.sub(a).mag();
-        let rb = center.sub(b).mag();
-        let rc = center.sub(c).mag();
+        const ra = center.sub(a).mag();
+        const rb = center.sub(b).mag();
+        const rc = center.sub(c).mag();
         if (Math.abs(ra - rb) > 0.01 ||
             Math.abs(rb - rc) > 0.01) {
-            throw `Got bad center: a=${a} b=${b} c=${c} center=${center}`;
+            throw new Error(`Got bad center: a=${a} b=${b} c=${c} center=${center}`);
         }
     }
     return center;
