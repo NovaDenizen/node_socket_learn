@@ -181,6 +181,7 @@ export default class HypCanvas {
 
         // set the stroke style to black
         context.strokeStyle = "#000";
+        context.fillStyle = "#eee";
 
         // render the disk boundary
         context.beginPath();
@@ -193,6 +194,8 @@ export default class HypCanvas {
         );
         context.closePath();
         context.stroke();
+        context.fill();
+        context.fillStyle = "#000"; // resetting it.
         // console.log("HypCanvas.draw(): ", this.lines);
         for (const e of this.lines) {
             // console.log("drawing line ", e);
