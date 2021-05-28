@@ -127,7 +127,7 @@ class DiskRenderingContext {
         // c.a = (g*a.b - b.b*h)/det
         // c.b = (b.a*h - a.a*g)/det
         const det = (b.a*a.b) - (a.a*b.b);
-        if (Math.abs(det) < 10.00001) {
+        if (Math.abs(det) < 0.00001) {
             this.drawScreenLine(a, b);
         } else {
             let g = (1 + b.magSq())/2;
@@ -150,7 +150,8 @@ class DiskRenderingContext {
     }
     private drawScreenArc(center: Complex, p1: Complex, p2: Complex) {
         const p1vec = p1.sub(center);
-        const radius = p1vec.mag() * this.scale;
+        //const radius = p1vec.mag() * this.scale;
+        const radius = 10;
 
         const p1s: { x: number, y: number } = this.toScreen(p1);
         const p2s: { x: number, y: number } = this.toScreen(p2);
