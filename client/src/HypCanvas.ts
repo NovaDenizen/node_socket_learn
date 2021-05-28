@@ -207,7 +207,7 @@ class Stroke implements RenderInst {
 export default class HypCanvas {
     private size: number;
     private canvas?: HTMLCanvasElement;
-    private insts: Array<RenderInst>;
+    private insts: RenderInst[];
 
     private pendingRedraw: boolean;
     private view: Xform;
@@ -396,12 +396,16 @@ export default class HypCanvas {
         const res = Complex.unit(radians).scale(diskR);
         return res;
     }
-    addLine(p1: Complex, p2: Complex) {
+    addLine(p1: Complex, p2: Complex): void {
         this.logger(`addLine(${p1}, ${p2})`);
         this.insts.push(new BeginPath());
         this.insts.push(new MoveTo(p1));
         this.insts.push(new LineTo(p2));
         this.insts.push(new Stroke())
+        this.postRedraw();
+    }
+    pushInst(i: RenderInst): void {
+        this.insts.push(i);
         this.postRedraw();
     }
     turtle(): Turtle {
@@ -430,17 +434,27 @@ export interface Turtle {
     penDown(): void;
     position(): Complex;
     idealPosition(): Complex;
+    beginPath(): void;
+    stroke(): void;
+    strokeStyle: string;
+    fillStyle: string;
 }
 
 class TurtleImpl {
     readonly canvas: HypCanvas;
     penIsDown: boolean;
+    pathMode: boolean;
+    _strokeStyle: string;
+    _fillStyle: string;
     // sends the origin and the +x vector to the turtle location and forward vector.
     private xform: Xform;
     constructor(canvas: HypCanvas) {
         this.canvas = canvas;;
         this.xform = Xform.identity;
         this.penIsDown = false;
+        this.pathMode = false;
+        this.strokeStyle = "#000";
+        tyis.fillStyle = this.strokeStyle;
         Object.seal(this);
     }
     clone(): Turtle {
@@ -448,6 +462,10 @@ class TurtleImpl {
         t.xform = this.xform;
         t.penIsDown = this.penIsDown;
         return t;
+    }
+    beginPath(): void {
+        this.pathMode = true;
+        this.canvas.pushInst(new BeginPath());
     }
     rotate(radians: number): void {
         this.xform = this.xform.compose(Xform.rotate(radians));
@@ -459,17 +477,26 @@ class TurtleImpl {
         const rawEnd = HypCanvas.polar(distance, 0);
         const fwd = Xform.originToPoint(rawEnd);
         const newXform = this.xform.compose(fwd);
+        const end = newXform.xform(Complex.zero);
         if (this.penIsDown) {
             // end point of line
-            const end = newXform.xform(Complex.zero);
-            this.canvas.addLine(start, end);
+            if (this.pathMode) {
+                this.canvas.pushInst(new LineTo(end));
+            } else {
+                this.canvas.addLine(start, end);
+            }
+        } else { // pen is up
+            this.canvas.pushInst(new MoveTo(end));
         }
         this.xform = newXform;
     }
+
     penDown() {
+        this.pathMode = false;
         this.penIsDown = true;
     }
     penUp() {
+        this.pathMode = false;
         this.penIsDown = false;
     }
     position(): Complex {
@@ -524,6 +551,17 @@ class TurtleImpl {
         const rot2 = Math.atan2(-q.b, q.a);
         return { rot1, forward, rot2 };
     }
+    stroke() {
+        this.canvas.pushInst(new Stroke());
+    }
+    set strokeStyle(s: string) {
+        this.canvas.pushInst(new SetStroke(s));
+        this._strokeStyle = s;
+    }
+    get strokeStyle(): string {
+        return this._strokeStyle;
+    }
+
 }
 
 
