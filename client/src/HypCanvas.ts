@@ -150,15 +150,23 @@ class DiskRenderingContext {
     }
     private drawScreenArc(center: Complex, p1: Complex, p2: Complex) {
         const p1vec = p1.sub(center);
-        //const radius = p1vec.mag() * this.scale;
-        const radius = 10;
+        const p2vec = p2.sub(center);
+
+        const cross = p1vec.a*p2vec.b - p1vec.b*p2vec.a;
+        const counterClockwise = cross > 0;
+        const radius = p1vec.mag()*this.scale;
 
         const p1s: { x: number, y: number } = this.toScreen(p1);
         const p2s: { x: number, y: number } = this.toScreen(p2);
-        const origins = this.toScreen(Complex.zero);
-        // the first control point is, luckily enough, the center of the disk.
-        // The second control point is the second point.
-        this.ctx().arcTo(origins.x, origins.y, p2s.x, p2s.y, radius);
+        const centers = this.toScreen(Complex.zero);
+        // these are the sane normal angles where 0 is +x and +angle goes CCW
+        const saneStartAngle = Math.atan2(p1vec.b, p1vec.a);
+        const saneEndAngle = Math.atan2(p2vec.b, p2vec.a);
+        // these are the insane javascript raster angles where +angle goes clockwise
+        const insaneStartAngle = -saneStartAngle;
+        const insaneEndAngle = -saneEndAngle;
+
+        this.ctx().arc(centers.x, centers.y, radius, insaneStartAngle, insaneEndAngle, counterClockwise);
     }
 }
 
