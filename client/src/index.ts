@@ -50,6 +50,58 @@ const makeButton = (name: string, call: () => void) => {
     p.appendChild(b);
 }
 
+// given triangle with angles alpha, beta, gamma, gives the side length of
+// the side opposite alpha.
+const triangleSideLength: ((alpha: number, beta: number, gamma: number) => number)  = 
+    (alpha: number, beta: number, gamma: number) => {
+    /*
+        hyperbolic law of cosines (k=1):
+            for any triangle with internal angles alpha, beta, gamma and side a opposite alpha:
+                cos(alpha) = -cos(beta)cos(gamma) + sin(beta)sin(gamma)cosh(a)
+                cos(alpha) + cos(beta)cos(gamma) = sin(beta)sin(gamma)cosh(a)
+                (cos(alpha) + cos(beta)cos(gamma))/(sin(beta)sin(gamm)) = cosh(a)
+                a = arccosh((cos(alpha) + cos(beta)cos(gamma))/(sin(beta)sin(gamm)));
+    */
+    const cos = Math.cos;
+    const sin = Math.sin;
+    const a: number = Math.acosh((cos(alpha) + cos(beta)*cos(gamma))/(sin(beta)*sin(gamma)));
+    return a;
+};
+
+// edgeLength is length of each edge
+// vertexRadius is distance from vertex to center of polygon
+// edgeRadius is distance from center to center of edge
+// internalAngle is internal angle of polygon
+// externalAngle is external angle of polygon
+// slices is 
+type PolyGeometry = 
+    { edgeLength: number; 
+      internalAngle: number; 
+      externalAngle: number; 
+      vertexRadius: number; 
+      edgeRadius: number;
+      sliceAngle: number;
+    };
+
+// sides is number of sides in the polygon
+// order is number of polygons that meat at each vertex
+const uniformPolygonGeometry:  ((sides: number, order: number) => PolyGeometry) 
+  = (sides: number, order: number) =>
+{
+    const internalAngle= 2*Math.PI/order;
+    const externalAngle = Math.PI - internalAngle;
+    const sliceAngle = 2*Math.PI/sides;
+    // A slice triangle has one sliceAngle at the center and two (internalAngle/2) at two vertexes.
+    const halfInternal = internalAngle/2;
+    const edgeLength = triangleSideLength(sliceAngle, halfInternal, halfInternal);
+    const vertexRadius = triangleSideLength(halfInternal, sliceAngle, halfInternal);
+    // this uses a half-slice triangle, with angles sliceAngle/2, 90, halfInternal
+    const edgeRadius = triangleSideLength(halfInternal, sliceAngle/2, Math.PI/2);
+    return {
+        edgeLength, internalAngle, externalAngle, vertexRadius, edgeRadius, sliceAngle,
+    };
+};
+
 const randomStyle = () => {
     const brightRandom = () => Math.floor(Math.max(Math.random(), Math.random()) * 256);
     const r = brightRandom();
@@ -105,38 +157,12 @@ const drawSimple = () => {
 };
 makeButton("Simple", drawSimple);
 
-/*
-    hyperbolic law of cosines (k=1):
-        for any triangle with internal angles alpha, beta, gamma and side a opposite alpha:
-            cos(alpha) = -cos(beta)cos(gamma) + sin(beta)sin(gamma)cosh(a)
-
-        For the (7,3) tiling (heptagons meeting 3 at each vertex)
-        center a heptagon on the origin.
-        consider one of the 7 slices of the heptagon, an iscoceles triangle
-        r is the distance from O to a vertex
-        e is the outer edge length
-        E = 2pi/7, the pie-slice angle at the origin opposite e.
-        G = pi/3, half the internal angle of the heptagon.
-            this is one of the equal pair of angles in the iscocelese slice triangle
-
-        cos(2pi/7) = -cos(pi/3)cos(pi/3)) + sin(pi/3)sin(pi/3)cosh(e)
-        cos(2pi/7) = -1/4 + 3/4*cosh(e)
-        cosh(e) = (cos(2pi/7) + 1/4)/(3/4)
-        e = arccosh((cos(2pi/7) + 1/4)/(3/4))
-
-        solving for r:
-            cos(pi/3) = -cos(pi/3)cos(2pi/7) + sin(pi/3)*sin(2pi/7)*cosh(r)
-            1/2 = -1/2 cos(2pi/7) + sqrt(3)/2 * sin(2pi/7)*cosh(r)
-            sqrt(3)/2*sin(2pi/7)*cosh(r) = 1/2 + 1/2*cos(2pi/7)
-            cosh(r) = (1/2 + 1/2 * cos(2pi/7))/(sqrt(3)/2 * sin(2*pi/7)
-                    = (1 + cos(2pi/7))/(sqrt(3)*sin(2*pi/7))
-            r = arccosh((1 + cos(2pi/7))/(sqrt(3)*sin(2*pi/7)))
-*/
 
 const drawSimpleHeptagons = () => {
-    const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
-    const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
-    const turn = Math.PI/3; // the external angle, not the internal angle
+    const geom = uniformPolygonGeometry(7, 4);
+    const e = geom.edgeLength;
+    const r = geom.vertexRadius;
+    const turn = geom.externalAngle;
     hc.reset();
     let center_cache: Complex[] = [];
     let heptagons: (depth: number, t: Turtle) => void;
@@ -155,7 +181,7 @@ const drawSimpleHeptagons = () => {
         t.fillStyle = randomStyle();
         t.fill();
         if (depth > 0) {
-            t.rotate(2*turn); // going clockwise around the heptagon we just did.
+            t.rotate(geom.internalAngle);
             for (let i = 0; i < 7; i++) {
                 heptagons(depth-1, t.clone());
                 t.forward(e);
