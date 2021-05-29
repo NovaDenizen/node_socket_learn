@@ -51,9 +51,10 @@ const makeButton = (name: string, call: () => void) => {
 }
 
 const randomStyle = () => {
-    const r = Math.floor(Math.random() * 256);
-    const g = Math.floor(Math.random() * 256);
-    const b = Math.floor(Math.random() * 256);
+    const brightRandom = () => Math.floor(Math.max(Math.random(), Math.random()) * 256);
+    const r = brightRandom();
+    const g = brightRandom();
+    const b = brightRandom();
     return `rgb(${r},${g},${b})`;
 }
 
@@ -216,10 +217,16 @@ const drawInfinityPie = () => {
     const slices = 30;
     const angle = Math.PI*2/slices;
     const t = hc.turtle();
+    const styles = ["red", "white", "blue"];
     for (let i = 0; i < slices; i++) {
-        let dest = t.idealPosition();
-        hc.addLine(Complex.zero, dest);
+        const ideal1 = t.idealPosition();
         t.rotate(angle);
+        const ideal2 = t.idealPosition();
+        hc.addPolygonPath([Complex.zero, ideal1, ideal2]);
+
+        const styleIdx = i % styles.length;
+        t.fillStyle = styles[styleIdx];
+        t.fill();
     }
 };
 makeButton("Infinity Pie", drawInfinityPie);

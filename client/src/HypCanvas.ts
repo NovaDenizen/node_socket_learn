@@ -107,7 +107,7 @@ class DiskRenderingContext {
 
         // looking for center c (and possibly r, radius of circle at c).
         // |c - a| = |c - b| = r
-        // the right triangle formed by the segment connecting the centers and an intersection point
+        // the right triangle formed by the centers and an intersection point
         // satisfies |c|^2 = 1 + r^2
         // (c - a)(c_ - a_) = r^2
         // (c - b)(c_ - b_) = r^2
@@ -131,7 +131,10 @@ class DiskRenderingContext {
         // c.a = (g*a.b - b.b*h)/det
         // c.b = (b.a*h - a.a*g)/det
         const det = (b.a*a.b) - (a.a*b.b);
-        if (Math.abs(det) < 0.00001) {
+        if (a.magSq() > 0.9999 && b.magSq() > 0.9999) {
+            // two ideal points, need to follow the outer edge counterclockwise
+            this.drawIdealArc(a, b);
+        } else if (Math.abs(det) < 0.00001) {
             this.drawScreenLine(a, b);
         } else {
             let g = (1 + b.magSq())/2;
@@ -144,6 +147,12 @@ class DiskRenderingContext {
         this.ctx().beginPath();
         this.firstPathPoint = this.lastPathPoint;
     }
+    closePath(): void {
+        let p = this.firstPathPoint;
+        this.lineTo(p);
+        this.ctx().closePath();
+    }
+
     stroke() {
         this.ctx().stroke();
     }
@@ -175,6 +184,16 @@ class DiskRenderingContext {
 
         this.ctx().arc(centers.x, centers.y, radius, insaneStartAngle, insaneEndAngle, counterClockwise);
     }
+    private drawIdealArc(p1: Complex, p2: Complex) {
+        const saneStartAngle = Math.atan2(p1.b, p1.a);
+        const saneEndAngle = Math.atan2(p2.b, p2.a);
+        const centers = this.toScreen(Complex.zero);
+        const p1s = this.toScreen(p1);
+        const p2s = this.toScreen(p2);
+        const insaneStartAngle = -saneStartAngle;
+        const insaneEndAngle = -saneEndAngle;
+        this.ctx().arc(centers.x, centers.y, this.scale, insaneStartAngle, insaneEndAngle, true);
+    }
 }
 
 interface RenderInst {
@@ -202,6 +221,12 @@ class BeginPath implements RenderInst {
     constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.beginPath();
+    }
+}
+class ClosePath implements RenderInst {
+    constructor() {}
+    exec(ctx: DiskRenderingContext): void {
+        ctx.closePath();
     }
 }
 class DoStroke implements RenderInst {
@@ -435,6 +460,17 @@ export default class HypCanvas {
         this.insts.push(new DoStroke())
         this.postRedraw();
     }
+    addPolygonPath(ps: Complex[]): void {
+        if (ps.length === 0) {
+            return;
+        }
+        this.insts.push(new MoveTo(ps[0]));
+        this.insts.push(new BeginPath());
+        for (let i = 1; i < ps.length; i++) {
+            this.insts.push(new LineTo(ps[i]));
+        }
+        this.insts.push(new LineTo(ps[0]));
+    }
     pushInst(i: RenderInst): void {
         this.insts.push(i);
         this.postRedraw();
@@ -466,6 +502,7 @@ export interface Turtle {
     position(): Complex;
     idealPosition(): Complex;
     beginPath(): void;
+    closePath(): void;
     stroke(): void;
     strokeStyle: string;
     fill(): void;
@@ -496,6 +533,9 @@ class TurtleImpl {
     beginPath(): void {
         this.pathMode = true;
         this.canvas.pushInst(new BeginPath());
+    }
+    closePath(): void {
+        this.canvas.pushInst(new ClosePath());
     }
     rotate(radians: number): void {
         this.xform = this.xform.compose(Xform.rotate(radians));
