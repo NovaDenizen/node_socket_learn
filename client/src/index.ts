@@ -158,8 +158,8 @@ const drawSimple = () => {
 makeButton("Simple", drawSimple);
 
 
-const drawSimpleHeptagons = () => {
-    const geom = uniformPolygonGeometry(7, 4);
+const drawSimplePolygons = (sides: number, order: number, depth: number) => {
+    const geom = uniformPolygonGeometry(sides, order);
     const e = geom.edgeLength;
     const r = geom.vertexRadius;
     const turn = geom.externalAngle;
@@ -169,30 +169,31 @@ const drawSimpleHeptagons = () => {
     let hept: Complex[] = [];
     {
         const t = hc.turtle();
-        for(let i = 0; i < 7; i++) {
+        for(let i = 0; i < sides; i++) {
             hept.push(t.position());
             t.forward(e);
             t.rotate(turn);
         }
     }
-    heptagons = (depth: number, t: Turtle) => {
+    const polygons = (depth: number, t: Turtle) => {
         //logger(`heptagons(${depth}, ${t.position()})`);
         t.relPolygon(hept);
         t.fillStyle = randomStyle();
         t.fill();
         if (depth > 0) {
             t.rotate(geom.internalAngle);
-            for (let i = 0; i < 7; i++) {
-                heptagons(depth-1, t.clone());
+            for (let i = 0; i < sides; i++) {
+                polygons(depth-1, t.clone());
                 t.forward(e);
                 t.rotate(-turn);
             }
         }
     }
     const t = hc.turtle();
-    heptagons(2, t);
+    polygons(depth, t);
 }
-makeButton("Slow hepts", drawSimpleHeptagons);
+makeButton("Slow hepts", () => drawSimplePolygons(7, 3, 2));
+makeButton("Slow hepts dual", () => drawSimplePolygons(3, 7, 4));
 
 const drawHeptagonEdgeTree = () => {
     const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
