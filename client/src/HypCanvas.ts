@@ -616,7 +616,18 @@ export class Turtle {
     get fillStyle(): string {
         return this._fillStyle;
     }
-
+    relPolygon(ps: Complex[]) {
+        this.canvas.pushInst(new BeginPath());
+        if (ps.length > 0) {
+            this.canvas.pushInst(new MoveTo(this.xform.xform(ps[0])));
+        }
+        for (let i = 1; i < ps.length; i++) {
+            this.canvas.pushInst(new LineTo(this.xform.xform(ps[i])));
+        }
+        if (ps.length > 0) {
+            this.canvas.pushInst(new LineTo(this.xform.xform(ps[0])));
+        }
+    }
 }
 
 

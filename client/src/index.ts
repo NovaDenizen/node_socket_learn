@@ -151,19 +151,11 @@ const drawSimpleHeptagons = () => {
     }
     heptagons = (depth: number, t: Turtle) => {
         //logger(`heptagons(${depth}, ${t.position()})`);
-        t.beginPath();
-        for (let i = 0; i < 7; i++) {
-            t.forward(e);
-            t.rotate(turn);
-        }
-        // should be back where we started
-        t.stroke();
+        t.relPolygon(hept);
         t.fillStyle = randomStyle();
         t.fill();
-        //logger(`heptagons fill at ${t.position()}`);
-        t.penUp();
         if (depth > 0) {
-            t.rotate(2*turn); // pointing back along the last edge, going to retrace our steps
+            t.rotate(2*turn); // going clockwise around the heptagon we just did.
             for (let i = 0; i < 7; i++) {
                 heptagons(depth-1, t.clone());
                 t.forward(e);
@@ -172,7 +164,6 @@ const drawSimpleHeptagons = () => {
         }
     }
     const t = hc.turtle();
-    t.penDown();
     heptagons(2, t);
 }
 makeButton("Slow hepts", drawSimpleHeptagons);
