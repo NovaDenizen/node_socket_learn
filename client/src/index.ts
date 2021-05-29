@@ -1,6 +1,7 @@
 import socket_client from "socket.io-client";
 import Complex from "./Complex";
 import { HypCanvas, Turtle } from "./HypCanvas";
+import { sprintf } from "sprintf-js";
 
 const x = new HypCanvas();
 
@@ -36,7 +37,8 @@ if (newdatabutton) {
 }
 
 const hc = new HypCanvas({ size: 500 });
-hc.logger = (s) => { socket.emit("clientlog", s); };
+const logger = (s: string) => { socket.emit("clientlog", s); };
+hc.logger = logger;
 document.body.appendChild(hc.makeCanvas());
 const p = document.createElement("p");
 
@@ -46,6 +48,13 @@ const makeButton = (name: string, call: () => void) => {
     b.type = "button";
     b.onclick = call;
     p.appendChild(b);
+}
+
+const randomStyle = () => {
+    const r = Math.floor(Math.random() * 256);
+    const g = Math.floor(Math.random() * 256);
+    const b = Math.floor(Math.random() * 256);
+    return `rgb(${r},${g},${b})`;
 }
 
 const drawSpiderweb = () => {
@@ -128,21 +137,33 @@ const drawSimpleHeptagons = () => {
     const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
     const turn = Math.PI/3; // the external angle, not the internal angle
     hc.reset();
+    let center_cache: Complex[] = [];
     let heptagons: (depth: number, t: Turtle) => void;
     heptagons = (depth: number, t: Turtle) => {
+        logger(`heptagons(${depth}, ${t.position()})`);
+        t.beginPath();
         for (let i = 0; i < 7; i++) {
             t.forward(e);
-            if (depth > 0) {
-                const t2 = t.clone();
-                t2.rotate(Math.PI);
-                heptagons(depth-1, t2);
-            }
             t.rotate(turn);
+        }
+        // should be back where we started
+        t.stroke();
+        t.fillStyle = randomStyle();
+        t.fill();
+        logger(`heptagons fill at ${t.position()}`);
+        t.penUp();
+        if (depth > 0) {
+            t.rotate(2*turn); // pointing back along the last edge, going to retrace our steps
+            for (let i = 0; i < 7; i++) {
+                heptagons(depth-1, t.clone());
+                t.forward(e);
+                t.rotate(-turn);
+            }
         }
     }
     const t = hc.turtle();
     t.penDown();
-    heptagons(0, t);
+    heptagons(2, t);
 }
 makeButton("Slow hepts", drawSimpleHeptagons);
 

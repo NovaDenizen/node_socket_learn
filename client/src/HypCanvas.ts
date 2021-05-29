@@ -147,6 +147,9 @@ class DiskRenderingContext {
     stroke() {
         this.ctx().stroke();
     }
+    fill() {
+        this.ctx().fill();
+    }
 
     private drawScreenLine(a: Complex, b: Complex) {
         const sb = this.toScreen(b);
@@ -201,10 +204,16 @@ class BeginPath implements RenderInst {
         ctx.beginPath();
     }
 }
-class Stroke implements RenderInst {
+class DoStroke implements RenderInst {
     constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.stroke();
+    }
+}
+class DoFill implements RenderInst {
+    constructor() {}
+    exec(ctx: DiskRenderingContext): void {
+        ctx.fill();
     }
 }
 class SetStroke implements RenderInst {
@@ -419,11 +428,11 @@ export default class HypCanvas {
         return res;
     }
     addLine(p1: Complex, p2: Complex): void {
-        this.logger(`addLine(${p1}, ${p2})`);
+        // this.logger(`addLine(${p1}, ${p2})`);
         this.insts.push(new BeginPath());
         this.insts.push(new MoveTo(p1));
         this.insts.push(new LineTo(p2));
-        this.insts.push(new Stroke())
+        this.insts.push(new DoStroke())
         this.postRedraw();
     }
     pushInst(i: RenderInst): void {
@@ -459,6 +468,7 @@ export interface Turtle {
     beginPath(): void;
     stroke(): void;
     strokeStyle: string;
+    fill(): void;
     fillStyle: string;
 }
 
@@ -478,6 +488,9 @@ class TurtleImpl {
         const t = new TurtleImpl(this.canvas);
         t.xform = this.xform;
         t.penIsDown = this.penIsDown;
+        t.pathMode = this.pathMode;
+        t._strokeStyle = this._strokeStyle;
+        t._fillStyle = this._fillStyle;
         return t;
     }
     beginPath(): void {
@@ -495,13 +508,10 @@ class TurtleImpl {
         const fwd = Xform.originToPoint(rawEnd);
         const newXform = this.xform.compose(fwd);
         const end = newXform.xform(Complex.zero);
-        if (this.penIsDown) {
-            // end point of line
-            if (this.pathMode) {
-                this.canvas.pushInst(new LineTo(end));
-            } else {
-                this.canvas.addLine(start, end);
-            }
+        if (this.pathMode) {
+            this.canvas.pushInst(new LineTo(end));
+        } else if (this.penIsDown) {
+            this.canvas.addLine(start, end);
         } else { // pen is up
             this.canvas.pushInst(new MoveTo(end));
         }
@@ -569,7 +579,7 @@ class TurtleImpl {
         return { rot1, forward, rot2 };
     }
     stroke() {
-        this.canvas.pushInst(new Stroke());
+        this.canvas.pushInst(new DoStroke());
     }
     set strokeStyle(s: string) {
         this.canvas.pushInst(new SetStroke(s));
@@ -577,6 +587,9 @@ class TurtleImpl {
     }
     get strokeStyle(): string {
         return this._strokeStyle;
+    }
+    fill() {
+        this.canvas.pushInst(new DoFill());
     }
     set fillStyle(s: string) {
         this.canvas.pushInst(new SetFill(s));
