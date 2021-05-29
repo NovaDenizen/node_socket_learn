@@ -476,7 +476,7 @@ export default class HypCanvas {
         this.postRedraw();
     }
     turtle(): Turtle {
-        return new TurtleImpl(this);
+        return new Turtle(this);
     }
     static metric(z1: Complex, z2: Complex): number {
         const termNumerator = z1.sub(z2);
@@ -491,25 +491,7 @@ export default class HypCanvas {
 
 export { HypCanvas };
 
-export interface Turtle {
-    readonly canvas: HypCanvas;
-    readonly penIsDown: boolean;
-    clone(): Turtle;
-    rotate(radians: number): void;
-    forward(distance: number): void;
-    penUp(): void;
-    penDown(): void;
-    position(): Complex;
-    idealPosition(): Complex;
-    beginPath(): void;
-    closePath(): void;
-    stroke(): void;
-    strokeStyle: string;
-    fill(): void;
-    fillStyle: string;
-}
-
-class TurtleImpl {
+export class Turtle {
     readonly canvas: HypCanvas;
     penIsDown: boolean = false;
     pathMode: boolean = false;;
@@ -522,7 +504,7 @@ class TurtleImpl {
         Object.seal(this);
     }
     clone(): Turtle {
-        const t = new TurtleImpl(this.canvas);
+        const t = new Turtle(this.canvas);
         t.xform = this.xform;
         t.penIsDown = this.penIsDown;
         t.pathMode = this.pathMode;
@@ -576,11 +558,7 @@ class TurtleImpl {
     // Given another turtle, determine values such that
     // this.rotate(rot1); this.forward(forward); this.rotate(rot2);
     // will place this turtle identically to other.
-    rfr(other_gen: Turtle): { rot1: number, forward: number, rot2: number } | null {
-        if (!(other_gen instanceof TurtleImpl)) {
-            return null;
-        }
-        const other: TurtleImpl = other_gen;
+    rfr(other: Turtle): { rot1: number, forward: number, rot2: number } | null {
         // xforms are associative and inversions compose to the identity.
         // this.compose(difference) == other
         // this.invert().compose(this.compose(difference)) == this.invert().compose(other)

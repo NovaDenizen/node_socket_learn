@@ -140,8 +140,17 @@ const drawSimpleHeptagons = () => {
     hc.reset();
     let center_cache: Complex[] = [];
     let heptagons: (depth: number, t: Turtle) => void;
+    let hept: Complex[] = [];
+    {
+        const t = hc.turtle();
+        for(let i = 0; i < 7; i++) {
+            hept.push(t.position());
+            t.forward(e);
+            t.rotate(turn);
+        }
+    }
     heptagons = (depth: number, t: Turtle) => {
-        logger(`heptagons(${depth}, ${t.position()})`);
+        //logger(`heptagons(${depth}, ${t.position()})`);
         t.beginPath();
         for (let i = 0; i < 7; i++) {
             t.forward(e);
@@ -151,7 +160,7 @@ const drawSimpleHeptagons = () => {
         t.stroke();
         t.fillStyle = randomStyle();
         t.fill();
-        logger(`heptagons fill at ${t.position()}`);
+        //logger(`heptagons fill at ${t.position()}`);
         t.penUp();
         if (depth > 0) {
             t.rotate(2*turn); // pointing back along the last edge, going to retrace our steps
