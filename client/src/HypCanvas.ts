@@ -388,13 +388,14 @@ export default class HypCanvas {
         let diskEnd = this.xyToComplex(screenEnd);
 
         // console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
-        if (diskStart.magSq() > 1) {
+        const radiusLimit = 0.9;
+        if (diskStart.mag() > radiusLimit) {
             // clamp it to disk
-            diskStart = diskStart.scale(0.999/diskStart.mag());
+            diskStart = diskStart.normalize().scale(radiusLimit);
         }
-        if (diskEnd.magSq() > 1) {
+        if (diskEnd.magSq() > radiusLimit) {
             // clamp it to disk
-            diskEnd = diskEnd.scale(0.999/diskEnd.mag());
+            diskEnd = diskEnd.normalize().scale(radiusLimit);
         }
         let oToEnd;
         let startToO;
