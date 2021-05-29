@@ -164,22 +164,42 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
     const r = geom.vertexRadius;
     const turn = geom.externalAngle;
     hc.reset();
-    let center_cache: Complex[] = [];
+    let centerCache: Complex[] = [];
     let heptagons: (depth: number, t: Turtle) => void;
-    let hept: Complex[] = [];
+    let verts: Complex[] = [];
     {
         const t = hc.turtle();
         for(let i = 0; i < sides; i++) {
-            hept.push(t.position());
+            verts.push(t.position());
             t.forward(e);
             t.rotate(turn);
         }
     }
+    let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
     const polygons = (depth: number, t: Turtle) => {
+        {
+            const t2 = t.clone();
+            t2.forward(geom.edgeLength/2);
+            t2.rotate(Math.PI/2);
+            t2.forward(geom.edgeRadius); 
+            // now t2 is at the center of the polygon we're about to draw
+            const newCenter = t2.position();
+            // yes, this is O(n^2) but I don't anticipate having more than a couple hundred polys here.
+            // and it only happens when drawing a new figure.
+            for (const c of centerCache) {
+                if (HypCanvas.metric(newCenter, c) < geom.edgeRadius) {
+                    // we already have this one
+                    return;
+                }
+            }
+            // store the new center, then proceed
+            centerCache.push(newCenter);
+        }
         //logger(`heptagons(${depth}, ${t.position()})`);
-        t.relPolygon(hept);
-        t.fillStyle = randomStyle();
+        t.relPolygon(verts);
+        t.fillStyle = styles[depth];
         t.fill();
+        t.stroke();
         if (depth > 0) {
             t.rotate(geom.internalAngle);
             for (let i = 0; i < sides; i++) {
@@ -189,11 +209,10 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
             }
         }
     }
-    const t = hc.turtle();
-    polygons(depth, t);
+    polygons(depth, hc.turtle());
 }
-makeButton("Slow hepts", () => drawSimplePolygons(7, 3, 2));
-makeButton("Slow hepts dual", () => drawSimplePolygons(3, 7, 4));
+makeButton("Slow hepts", () => drawSimplePolygons(7, 3, 4));
+makeButton("Slow hepts dual", () => drawSimplePolygons(3, 7, 6));
 
 const drawHeptagonEdgeTree = () => {
     const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
