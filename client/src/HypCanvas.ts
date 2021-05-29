@@ -63,15 +63,19 @@ class DiskRenderingContext {
         this.ctx2d = ctx;
     }
     clear() {
-        // set the stroke style to black
         const c = this.ctx();
+        // clears the canvas to the background color
         c.clearRect(0, 0, this.xOffset*2, this.yOffset*2);
+        // set the styles to solid black
         c.strokeStyle = "#000";
         c.fillStyle = "#eee";
+        // set the path to the border of the disk
         c.beginPath();
         c.arc(this.xOffset, this.yOffset, this.scale, 0, Math.PI*2);
         c.closePath();
+        // draw the outline
         c.stroke();
+        // fill the interior
         c.fill();
         c.fillStyle = "#000"; // resetting it.
     }
@@ -79,7 +83,7 @@ class DiskRenderingContext {
     private viewed(p: Complex): Complex {
         return this.view.xform(p);
     }
-    private ctx(): CanvasRenderingContext2D {
+    ctx(): CanvasRenderingContext2D {
         if (!this.ctx2d) {
             throw new Error("couldn't create canvas context");
         }
@@ -201,6 +205,24 @@ class Stroke implements RenderInst {
     constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.stroke();
+    }
+}
+class SetStroke implements RenderInst {
+    style: string;
+    constructor(style: string) {
+        this.style = style;
+    }
+    exec(ctx: DiskRenderingContext): void {
+        ctx.ctx().strokeStyle = this.style;
+    }
+}
+class SetFill implements RenderInst {
+    style: string;
+    constructor(style: string) {
+        this.style = style;
+    }
+    exec(ctx: DiskRenderingContext): void {
+        ctx.ctx().fillStyle = this.style;
     }
 }
 
@@ -442,19 +464,14 @@ export interface Turtle {
 
 class TurtleImpl {
     readonly canvas: HypCanvas;
-    penIsDown: boolean;
-    pathMode: boolean;
-    _strokeStyle: string;
-    _fillStyle: string;
+    penIsDown: boolean = false;
+    pathMode: boolean = false;;
+    private _strokeStyle: string = "#000";
+    private _fillStyle: string = "#000";;
     // sends the origin and the +x vector to the turtle location and forward vector.
-    private xform: Xform;
+    private xform: Xform = Xform.identity;;
     constructor(canvas: HypCanvas) {
-        this.canvas = canvas;;
-        this.xform = Xform.identity;
-        this.penIsDown = false;
-        this.pathMode = false;
-        this.strokeStyle = "#000";
-        tyis.fillStyle = this.strokeStyle;
+        this.canvas = canvas;
         Object.seal(this);
     }
     clone(): Turtle {
@@ -560,6 +577,13 @@ class TurtleImpl {
     }
     get strokeStyle(): string {
         return this._strokeStyle;
+    }
+    set fillStyle(s: string) {
+        this.canvas.pushInst(new SetFill(s));
+        this._fillStyle = s;
+    }
+    get fillStyle(): string {
+        return this._fillStyle;
     }
 
 }

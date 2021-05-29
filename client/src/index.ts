@@ -40,9 +40,17 @@ hc.logger = (s) => { socket.emit("clientlog", s); };
 document.body.appendChild(hc.makeCanvas());
 const p = document.createElement("p");
 
+const makeButton = (name: string, call: () => void) => {
+    const b = document.createElement("input");
+    b.value = name;
+    b.type = "button";
+    b.onclick = call;
+    p.appendChild(b);
+}
+
 const drawSpiderweb = () => {
-    const n = 10;
-    const deltaR = 3 / n;
+    const n = 20;
+    const deltaR = 5 / n;
     hc.reset();
     let deltaTheta = Math.PI * 2 / n;
     for (let ri = 1; ri < n; ri++) {
@@ -61,14 +69,6 @@ const drawSpiderweb = () => {
         }
     }
 };
-
-const makeButton = (name: string, call: () => void) => {
-    const b = document.createElement("input");
-    b.value = name;
-    b.type = "button";
-    b.onclick = call;
-    p.appendChild(b);
-}
 makeButton("spiderweb", drawSpiderweb);
 
 
@@ -192,7 +192,7 @@ makeButton("Fast hepts", drawHeptagonEdgeTree);
 
 const drawInfinityPie = () => {
     hc.reset();
-    const slices = 12;
+    const slices = 30;
     const angle = Math.PI*2/slices;
     const t = hc.turtle();
     for (let i = 0; i < slices; i++) {
