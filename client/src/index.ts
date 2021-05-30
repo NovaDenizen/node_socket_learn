@@ -165,7 +165,6 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
     const turn = geom.externalAngle;
     hc.reset();
     let centerCache: Complex[] = [];
-    let heptagons: (depth: number, t: Turtle) => void;
     let verts: Complex[] = [];
     {
         const t = hc.turtle();
@@ -176,40 +175,53 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
         }
     }
     let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
-    const polygons = (depth: number, t: Turtle) => {
+    let fifo: [Turtle, number][] = [[hc.turtle(), depth]];
+    while (fifo.length > 0) {
+        const s = fifo.shift();
+        if (!s) {
+            break;
+        }
+        let skip = false;
+        const [t, depth] = s;
+        let newCenter;
         {
             const t2 = t.clone();
             t2.forward(geom.edgeLength/2);
             t2.rotate(Math.PI/2);
             t2.forward(geom.edgeRadius); 
             // now t2 is at the center of the polygon we're about to draw
-            const newCenter = t2.position();
+            newCenter = t2.position();
             // yes, this is O(n^2) but I don't anticipate having more than a couple hundred polys here.
             // and it only happens when drawing a new figure.
             for (const c of centerCache) {
                 if (HypCanvas.metric(newCenter, c) < geom.edgeRadius) {
                     // we already have this one
-                    return;
+                    skip = true;
+                    break;
                 }
             }
-            // store the new center, then proceed
-            centerCache.push(newCenter);
         }
-        //logger(`heptagons(${depth}, ${t.position()})`);
+        if (skip) {
+            continue;
+        }
+
+        // store the new center
+        centerCache.push(newCenter);
         t.relPolygon(verts);
         t.fillStyle = styles[depth];
         t.fill();
         t.stroke();
+        //logger(`drew at ${t.position()} with depth ${depth}`);
         if (depth > 0) {
             t.rotate(geom.internalAngle);
             for (let i = 0; i < sides; i++) {
-                polygons(depth-1, t.clone());
+                fifo.push([t.clone(), depth-1]);
+                //logger(`pushed [${t.position()}, ${depth-1}] now fifo.length==${fifo.length}`);
                 t.forward(e);
                 t.rotate(-turn);
             }
         }
     }
-    polygons(depth, hc.turtle());
 }
 makeButton("Slow hepts", () => drawSimplePolygons(7, 3, 4));
 makeButton("Slow hepts dual", () => drawSimplePolygons(3, 7, 6));
