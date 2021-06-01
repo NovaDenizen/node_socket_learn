@@ -121,8 +121,16 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
             t.rotate(turn);
         }
     }
+    let fifo: [Turtle, number][] = [];
+    {
+        // move turtle to position so that first poly is centered on origin.
+        let t = hc.turtle();
+        t.forward(geom.vertexRadius);
+        t.rotate(Math.PI - geom.internalAngle/2);
+
+        fifo.push([t, depth]);
+    }
     let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
-    let fifo: [Turtle, number][] = [[hc.turtle(), depth]];
     while (fifo.length > 0) {
         const [t, depth] = fifo.shift()!; // '!' is kosher since we check fifo.length
         let newCenter;
