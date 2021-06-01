@@ -10,7 +10,7 @@ import { sprintf } from "sprintf-js";
 export class PolygonGeometry {
     readonly edgeLength: number; 
     readonly internalAngle: number; 
-    readonly externalAngle!: number; 
+    readonly externalAngle: number; 
     readonly vertexRadius: number; 
     readonly edgeRadius: number;
     readonly sliceAngle: number;
@@ -20,6 +20,7 @@ export class PolygonGeometry {
         this.sides = sides;
         this.order = order;
         this.internalAngle= 2*Math.PI/order;
+
         this.sliceAngle = 2*Math.PI/sides;
         if (sides < 3) {
             throw new Error("not enough sides in PolygonGeometry constructor");
@@ -27,6 +28,7 @@ export class PolygonGeometry {
         if (this.internalAngle + this.sliceAngle >= Math.PI) {
             throw new Error("order is too small in PolygonGeometry constructor");
         }
+        this.externalAngle = Math.PI - this.internalAngle;
         // A slice triangle has one sliceAngle at the center and two (internalAngle/2) at two vertices.
         const halfInternal = this.internalAngle/2;
         this.edgeLength = PolygonGeometry.triangleSideLength(this.sliceAngle, halfInternal, halfInternal);
