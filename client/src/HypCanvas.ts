@@ -6,21 +6,8 @@ import Xform from "./Xform";
 /**
  * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disk model.
  *
- * TODO: enable different K
  * TODO: zoom
  * TODO: Model/view separation
- * TODO: filled regions? paths?
- * TODO: strokes, stroke and fill styles
-    going to do it the same as CanvasRenderingContext2D.
-    penDown(), penUp(), put turtle into pen mode, every line is drawn as the turtle moves.
-    beginPath() puts turtle into path mode.  Moves are stored up.  stroke(), fill(), strokeStyle, 
-    fillstyle, closePath() all need to be on the turtle.
-    current path needs to be stored on the turtle.
-    Maybe the best way to do it is with an instruction model.
-    pen mode forward() adds a [MOVE_TO, BEGIN_PATH, LINE_TO, STROKE] sequence.
-    setting a stroke style adds a "SET_STROKE_STYLE" instruction.  Similar with SET_FILL_STYLE.
-    Not sure what to do with ideal points.  Maybe check if both endpoints on a line are ideal, then go 
-    counterclockwise around the edge to connect them.  closePath() will need to handle this.
  */
 
 /*
@@ -502,7 +489,7 @@ export class Turtle {
     private _strokeStyle: string = "#000";
     private _fillStyle: string = "#000";;
     // sends the origin and the +x vector to the turtle location and forward vector.
-    private xform: Xform = Xform.identity;;
+    private xform: Xform = Xform.identity;
     constructor(canvas: HypCanvas) {
         this.canvas = canvas;
         Object.seal(this);
@@ -519,7 +506,7 @@ export class Turtle {
         this.xform = this.xform.compose(Xform.rotate(radians));
     }
     forward(distance: number): void {
-        // origin-local end point of line.
+        // turtle-local end point of line, as if turtle was homed.
         const offset = HypCanvas.polar(distance, 0);
         this.move(offset);
     }
@@ -545,8 +532,8 @@ export class Turtle {
     }
     penDown() {
         if (!this._penIsDown) {
-            this.canvas.pushInst(new MoveTo(this.position()));
             this.canvas.pushInst(new BeginPath());
+            this.canvas.pushInst(new MoveTo(this.position()));
             this._penIsDown = true;
         }
     }
