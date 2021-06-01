@@ -222,10 +222,11 @@ const drawIdealRays = () => {
         const bottomRightIdeal = t.idealPosition();
         t.home();
         t.fillStyle = styles[(i + n) % styles.length];
-        t.relPolygon([leftIdeal, bottomRightIdeal, topRightIdeal]);
+        t.relPolygon([leftIdeal, bottom, bottomRightIdeal, topRightIdeal, top]);
         t.fill();
     }
 };
+makeButton("Ideal Rays", drawIdealRays);
 
 
 document.body.appendChild(p);
