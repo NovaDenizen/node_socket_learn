@@ -174,8 +174,10 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
         }
     }
 }
-makeButton("Slow hepts", () => drawSimplePolygons(7, 3, 4));
-makeButton("Slow hepts dual", () => drawSimplePolygons(3, 7, 8));
+makeButton("Squares", () =>drawSimplePolygons(4, 5, 4));
+makeButton("Pentagons", () =>drawSimplePolygons(5, 4, 4));
+makeButton("Heptagons", () => drawSimplePolygons(7, 3, 4));
+makeButton("Heptagons dual", () => drawSimplePolygons(3, 7, 8));
 
 
 const drawInfinityPie = () => {
