@@ -499,7 +499,6 @@ export class Turtle {
     // when !penIsDown, turtle is in "calculate" mode, where positions etc. can be calculated without
     // causing anything to be added to HypCanvas's render list.
     private _penIsDown: boolean = false;
-    readonly penIsDown: boolean;
     private _strokeStyle: string = "#000";
     private _fillStyle: string = "#000";;
     // sends the origin and the +x vector to the turtle location and forward vector.
@@ -511,7 +510,7 @@ export class Turtle {
     clone(): Turtle {
         const t = new Turtle(this.canvas);
         t.xform = this.xform;
-        t.penIsDown = this.penIsDown;
+        t._penIsDown = this.penIsDown;
         t._strokeStyle = this._strokeStyle;
         t._fillStyle = this._fillStyle;
         return t;
@@ -636,7 +635,7 @@ export class Turtle {
             this.canvas.pushInst(new LineTo(this.xform.xform(ps[0])));
         }
     }
-    home() {
+    home(): void {
         let p = this.position();
         let x = Xform.originToPoint(p); 
         this.xform = x;
@@ -646,8 +645,18 @@ export class Turtle {
         // this is redundant, I think.
         this.xform = Xform.identity;
     }
+    relativeLocation(p: Complex): Complex {
+        return this.xform.invert().xform(p);
+    }
+    aimAt(p: Complex): void {
+        let rp = this.relativeLocation(p); 
+        if (rp.magSq() < 0.000000001) {
+            throw new Error("point is too nearby to aim at");
+        }
+        let bearing = Math.atan2(rp.b, rp.a);
+        this.rotate(bearing);
+    }
 
-        
 
 }
 
