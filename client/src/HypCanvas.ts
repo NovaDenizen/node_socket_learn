@@ -444,6 +444,7 @@ export default class HypCanvas {
         return new Complex(a,b);
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
+    // r is the distance from the origin in the poincare metric.
     static polar(r: number, radians: number): Complex {
         // if a point is at a distance r from the disk origin, then the distance d on the
         // hyperbolic plane is d = 2 * arctanh(r)
@@ -494,8 +495,11 @@ export { HypCanvas };
 
 export class Turtle {
     readonly canvas: HypCanvas;
-    penIsDown: boolean = false;
-    pathMode: boolean = false;;
+    // when penIsDown, moves are added via HypCanvas.pushInst
+    // when !penIsDown, turtle is in "calculate" mode, where positions etc. can be calculated without
+    // causing anything to be added to HypCanvas's render list.
+    private _penIsDown: boolean = false;
+    readonly penIsDown: boolean;
     private _strokeStyle: string = "#000";
     private _fillStyle: string = "#000";;
     // sends the origin and the +x vector to the turtle location and forward vector.
@@ -508,46 +512,49 @@ export class Turtle {
         const t = new Turtle(this.canvas);
         t.xform = this.xform;
         t.penIsDown = this.penIsDown;
-        t.pathMode = this.pathMode;
         t._strokeStyle = this._strokeStyle;
         t._fillStyle = this._fillStyle;
         return t;
-    }
-    beginPath(): void {
-        this.pathMode = true;
-        this.canvas.pushInst(new BeginPath());
-    }
-    closePath(): void {
-        this.canvas.pushInst(new ClosePath());
     }
     rotate(radians: number): void {
         this.xform = this.xform.compose(Xform.rotate(radians));
     }
     forward(distance: number): void {
+        // origin-local end point of line.
+        const offset = HypCanvas.polar(distance, 0);
+        this.move(offset);
+    }
+
+    // Assuming turtle is at home position (at origin, pointing right), move it to offset.
+    // So offset is the movement relative to the Turtle's reference frame.
+    move(offset: Complex): void {
         // start point of line
         const start = this.xform.xform(Complex.zero);
-        // origin-local end point of line.
-        const rawEnd = HypCanvas.polar(distance, 0);
-        const fwd = Xform.originToPoint(rawEnd);
+        const fwd = Xform.originToPoint(offset);
         const newXform = this.xform.compose(fwd);
         const end = newXform.xform(Complex.zero);
-        if (this.pathMode) {
+        if (this.penIsDown) {
             this.canvas.pushInst(new LineTo(end));
-        } else if (this.penIsDown) {
-            this.canvas.addLine(start, end);
-        } else { // pen is up
-            this.canvas.pushInst(new MoveTo(end));
+            this.canvas.pushInst(new DoStroke());
+            this.canvas.pushInst(new BeginPath());
         }
         this.xform = newXform;
     }
 
+    get penIsDown() {
+        return this._penIsDown;
+    }
     penDown() {
-        this.pathMode = false;
-        this.penIsDown = true;
+        if (!this._penIsDown) {
+            this.canvas.pushInst(new MoveTo(this.position()));
+            this.canvas.pushInst(new BeginPath());
+            this._penIsDown = true;
+        }
     }
     penUp() {
-        this.pathMode = false;
-        this.penIsDown = false;
+        if (this._penIsDown) {
+            this._penIsDown = false;
+        }
     }
     position(): Complex {
         return this.xform.xform(Complex.zero);
@@ -629,6 +636,19 @@ export class Turtle {
             this.canvas.pushInst(new LineTo(this.xform.xform(ps[0])));
         }
     }
+    home() {
+        let p = this.position();
+        let x = Xform.originToPoint(p); 
+        this.xform = x;
+        // We have now effectively canceled out our rotation without moving.
+        // Using move() here takes care of lines, pen management, etc.
+        this.move(p.neg());
+        // this is redundant, I think.
+        this.xform = Xform.identity;
+    }
+
+        
+
 }
 
 

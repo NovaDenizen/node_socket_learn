@@ -199,6 +199,31 @@ const drawInfinityPie = () => {
 };
 makeButton("Infinity Pie", drawInfinityPie);
 
+const drawIdealRays = () => {
+    hc.reset();
+    const delta = 0.25;
+    const n = 8;
+    let leftIdeal = new Complex(-1, 0);
+    let t = hc.turtle();
+    let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
+    for(i = -n; i < n; i++) {
+        t.penUp();
+        let bottom = HypCanvas.polar(delta*i, Math.PI/2); 
+        let top = HypCanvas.polar(delta*(i+1), Math.PI/2);
+        t.moveTo(top);
+        t.aimAt(leftIdeal);
+        t.rotate(Math.PI)
+        const topRightIdeal = t.idealPosition();
+        t.moveTo(bottom);
+        t.aimAt(leftIdeal);
+        t.rotate(Math.PI)
+        const bottomRightIdeal = t.idealPosition();
+        t.fillStyle = styles[(i + n) % styles.length];
+        t.relPolygon([leftIdeal, bottomRightIdeal, upperRightIdeal]);
+        t.fill();
+    }
+};
+
 
 document.body.appendChild(p);
 
