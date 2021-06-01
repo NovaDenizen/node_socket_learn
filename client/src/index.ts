@@ -124,13 +124,9 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
     let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
     let fifo: [Turtle, number][] = [[hc.turtle(), depth]];
     while (fifo.length > 0) {
-        const s = fifo.shift();
-        if (!s) {
-            break;
-        }
-        let skip = false;
-        const [t, depth] = s;
+        const [t, depth] = fifo.shift()!; // '!' is kosher since we check fifo.length
         let newCenter;
+        let skip = false;
         {
             const t2 = t.clone();
             t2.forward(geom.edgeLength/2);
