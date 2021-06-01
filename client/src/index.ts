@@ -36,11 +36,11 @@ if (newdatabutton) {
     };
 }
 
-const hc = new HypCanvas({ size: 500 });
+const hc = new HypCanvas({ size: 400 });
 const logger = (s: string) => { socket.emit("clientlog", s); };
 hc.logger = logger;
 document.body.appendChild(hc.makeCanvas());
-const p = document.createElement("p");
+let p = document.createElement("p");
 
 const makeButton = (name: string, call: () => void) => {
     const b = document.createElement("input");
@@ -197,6 +197,10 @@ const drawInfinityPie = () => {
         t.fill();
     }
 };
+
+document.body.appendChild(p);
+p = document.createElement("p");
+
 makeButton("Infinity Pie", drawInfinityPie);
 
 const drawIdealRays = () => {
@@ -227,6 +231,37 @@ const drawIdealRays = () => {
     }
 };
 makeButton("Ideal Rays", drawIdealRays);
+
+const dumbbell = () => {
+    hc.reset();
+    const t = hc.turtle();
+    t.forward(0.5);
+    const rightFocus = t.position();
+    const leftFocus = rightFocus.neg();
+    let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
+    const n = 12;
+    const idealFan = (startAng: number, endAng: number, focus: Complex, n: number) => {
+        const t = hc.turtle();
+        let range = endAng - startAng;
+        let deltaAng = range/n;
+        for(let i = 0; i < n; i++) {
+            let a1 = startAng + deltaAng*i;
+            let ideal1 = Complex.unit(a1);
+            let a2 = a1 + deltaAng;
+            let ideal2 = Complex.unit(a2);
+            t.fillStyle = styles[i % styles.length];
+            t.relPolygon([focus, ideal1, ideal2]);
+            t.fill();
+        }
+    };
+    idealFan(-Math.PI/2, Math.PI/2, rightFocus, n);
+    idealFan(Math.PI/2, 3*Math.PI/2, leftFocus, n);
+    // draw the line connecting the focii
+    let leftDelta = t.relativePosition(leftFocus);
+    t.penDown();
+    t.move(leftDelta);
+}
+makeButton("Dumbbell", dumbbell);
 
 
 document.body.appendChild(p);

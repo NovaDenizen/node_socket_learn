@@ -55,7 +55,7 @@ class DiskRenderingContext {
         c.clearRect(0, 0, this.xOffset*2, this.yOffset*2);
         // set the styles to solid black
         c.strokeStyle = "#000";
-        c.fillStyle = "#eee";
+        c.fillStyle = "#888";
         // set the path to the border of the disk
         c.beginPath();
         c.arc(this.xOffset, this.yOffset, this.scale, 0, Math.PI*2);
@@ -632,11 +632,11 @@ export class Turtle {
         // this is redundant, I think.
         this.xform = Xform.identity;
     }
-    relativeLocation(p: Complex): Complex {
+    relativePosition(p: Complex): Complex {
         return this.xform.invert().xform(p);
     }
     aimAt(p: Complex): void {
-        let rp = this.relativeLocation(p); 
+        let rp = this.relativePosition(p); 
         if (rp.magSq() < 0.000000001) {
             throw new Error("point is too nearby to aim at");
         }
