@@ -175,51 +175,8 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
     }
 }
 makeButton("Slow hepts", () => drawSimplePolygons(7, 3, 4));
-makeButton("Slow hepts dual", () => drawSimplePolygons(3, 7, 6));
+makeButton("Slow hepts dual", () => drawSimplePolygons(3, 7, 8));
 
-const drawHeptagonEdgeTree = () => {
-    const e = Math.acosh((Math.cos(2*Math.PI/7) + 0.25) / 0.75);
-    const r = Math.acosh((1 + Math.cos(2*Math.PI/7))/(Math.sqrt(3)*Math.sin(2*Math.PI/7)));
-    const turn = Math.PI/3; // the external angle, not the internal angle
-    hc.reset();
-    // Instead of cleverly drawing heptagons, I'm drawing 3 trees of heptagon edges.
-    // When an edge doesn't move farther away from the origin, we don't recurse.
-    let heptree: (depth: number, t: Turtle) => void;
-    heptree = (depth: number, t: Turtle) => {
-
-        const start = t.position();
-        t.forward(e);
-        const end = t.position();
-        if (HypCanvas.origin_metric(end) - HypCanvas.origin_metric(start) > 0.01) {
-            hc.addLine(start, end);
-            if (depth > 0) {
-                {
-                    const t_1 = t.clone();
-                    t_1.rotate(Math.PI/3);
-                    heptree(depth-1, t_1);
-                }
-                {
-                    const t_2 = t.clone();
-                    t_2.rotate(-Math.PI/3);
-                    heptree(depth-1, t_2);
-                }
-            }
-        } else {
-            // only draw a 'horizontal' edge when it goes ccw.
-            if (start.a*end.b - end.a*start.b > 0) {
-                hc.addLine(start, end);
-            }
-        }
-    }
-    let d = 8;
-    let t = hc.turtle();
-    heptree(d, t.clone());
-    t.rotate(Math.PI*2/3);
-    heptree(d, t.clone());
-    t.rotate(Math.PI*2/3);
-    heptree(d, t.clone());
-}
-makeButton("Fast hepts", drawHeptagonEdgeTree);
 
 const drawInfinityPie = () => {
     hc.reset();
