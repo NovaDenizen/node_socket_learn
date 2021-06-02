@@ -73,10 +73,10 @@ async function basic_query(query: string): Promise<any[]> {
 
 io.on('connection', (socket: socket_io.Socket) => {
     console.log(`new connection id=${socket.id} from ${socket.request.connection.remoteAddress}`);
-    sendnewdata(socket);
+    // sendnewdata(socket);
     socket.on('getnewdata', () => {
         console.log(`got getnewdata from ${socket.id}`);
-        sendnewdata(socket);
+        // sendnewdata(socket);
     });
     socket.on('getorigins', () => {
         console.log('got getorogins from ${socket.id}');

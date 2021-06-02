@@ -5,7 +5,8 @@
         "socket.io": "^4.0.2"
     },
     "scripts": {
-        "start": "tsc && tslint --project . && node dist/server.js"
+        "start": "tsc && node dist/server.js",
+        "tslint": "tslint -- project ."
     },
     "devDependencies": {
         "@types/express": "^4.17.11",

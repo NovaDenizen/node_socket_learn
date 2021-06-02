@@ -102,7 +102,8 @@ const drawSimple = () => {
         t.rotate(turn);
     }
 };
-makeButton("Simple", drawSimple);
+// this is too basic to include while things are working
+//makeButton("Simple", drawSimple);
 
 
 const drawSimplePolygons = (sides: number, order: number, depth: number) => {
@@ -287,6 +288,18 @@ document.body.appendChild(p);
 
 //drawHeptagonEdgeTree();
 drawSpiderweb();
+
+// bearing, offset, and orientation are the instructions a turtle needs to follow to get from the 
+// home position of the current frame to the home position of the other frame.
+// t.rotate(bearing); t.forward(offset); t.rotate(orientation);
+// This is, of course, equivalent to either a t.move(...); t.rotate(..) or t.rotate(); t.move(..), 
+// but in this slightly redundant representation the parameters are real-valued.
+type FrameTransition = { bearing: number, offset: number, orientation: number };
+type Anchor = { id: string, 
+                neighbors: { id: string, transition: FrameTransition }[], 
+                draw: (t: Turtle) => void
+              };
+const worldMap: Anchor[] = [];
 
 
 //console.log("index.ts is done");
