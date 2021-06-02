@@ -12,7 +12,6 @@
     "devDependencies": {
         "@types/sprintf-js": "^1.1.2",
         "socket.io-client": "^4.1.2",
-        "sprintf-js": "^1.1.2",
         "webpack-cli": "^4.7.0"
     },
     "nodemonConfig": {

@@ -15,12 +15,12 @@ import Xform from "./Xform";
 This is not adequate.
 There sure are a lot of remember-and-replay stages involved here.
 
-We need a record of all drawing instructions stored in a view-independent manner, 
+We need a record of all drawing instructions stored in a view-independent manner,
 so that when the view changes we can rerun them to draw the current display in the
 new view xform.
 
-We need a DiskRenderingContext that consumes straight-line operations like a 
-CanvasRenderingContext2D, applies a view xform, turns the line into a screen-coordinate arc, 
+We need a DiskRenderingContext that consumes straight-line operations like a
+CanvasRenderingContext2D, applies a view xform, turns the line into a screen-coordinate arc,
 and calls CanvasRenderingContext2D.arcTo().
 
 */
@@ -124,9 +124,9 @@ class DiskRenderingContext {
         } else if (Math.abs(det) < 0.00001) {
             this.drawScreenLine(a, b);
         } else {
-            let g = (1 + b.magSq())/2;
-            let h = (1 + a.magSq())/2;
-            let center = new Complex((g*a.b - b.b*h)/det, (b.a*h - a.a*g)/det);
+            const g = (1 + b.magSq())/2;
+            const h = (1 + a.magSq())/2;
+            const center = new Complex((g*a.b - b.b*h)/det, (b.a*h - a.a*g)/det);
             this.drawScreenArc(center, a, b);
         }
     }
@@ -135,7 +135,7 @@ class DiskRenderingContext {
         this.firstPathPoint = this.lastPathPoint;
     }
     closePath(): void {
-        let p = this.firstPathPoint;
+        const p = this.firstPathPoint;
         this.lineTo(p);
         this.ctx().closePath();
     }
@@ -205,25 +205,21 @@ class LineTo implements RenderInst {
     }
 }
 class BeginPath implements RenderInst {
-    constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.beginPath();
     }
 }
 class ClosePath implements RenderInst {
-    constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.closePath();
     }
 }
 class DoStroke implements RenderInst {
-    constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.stroke();
     }
 }
 class DoFill implements RenderInst {
-    constructor() {}
     exec(ctx: DiskRenderingContext): void {
         ctx.fill();
     }
@@ -623,8 +619,8 @@ export class Turtle {
         }
     }
     home(): void {
-        let p = this.position();
-        let x = Xform.originToPoint(p); 
+        const p = this.position();
+        const x = Xform.originToPoint(p);
         this.xform = x;
         // We have now effectively canceled out our rotation without moving.
         // Using move() here takes care of lines, pen management, etc.
@@ -636,11 +632,11 @@ export class Turtle {
         return this.xform.invert().xform(p);
     }
     aimAt(p: Complex): void {
-        let rp = this.relativePosition(p); 
+        const rp = this.relativePosition(p);
         if (rp.magSq() < 0.000000001) {
             throw new Error("point is too nearby to aim at");
         }
-        let bearing = Math.atan2(rp.b, rp.a);
+        const bearing = Math.atan2(rp.b, rp.a);
         this.rotate(bearing);
     }
 

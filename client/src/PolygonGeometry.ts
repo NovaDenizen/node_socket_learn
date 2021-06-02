@@ -1,4 +1,3 @@
-import { sprintf } from "sprintf-js";
 
 
 // edgeLength is length of each edge
@@ -6,12 +5,11 @@ import { sprintf } from "sprintf-js";
 // edgeRadius is distance from center to center of edge
 // internalAngle is internal angle of polygon
 // externalAngle is external angle of polygon
-// slices is 
 export class PolygonGeometry {
-    readonly edgeLength: number; 
-    readonly internalAngle: number; 
-    readonly externalAngle: number; 
-    readonly vertexRadius: number; 
+    readonly edgeLength: number;
+    readonly internalAngle: number;
+    readonly externalAngle: number;
+    readonly vertexRadius: number;
     readonly edgeRadius: number;
     readonly sliceAngle: number;
     readonly sides: number;
@@ -40,7 +38,7 @@ export class PolygonGeometry {
     }
     // Given triangle with angles alpha, beta, gamma, gives the side length of
     // the side opposite alpha.
-    static triangleSideLength(alpha: number, beta: number, gamma: number): number { 
+    static triangleSideLength(alpha: number, beta: number, gamma: number): number {
         if (alpha + beta + gamma >= Math.PI ||
             alpha <= 0 ||
             beta <= 0 ||
