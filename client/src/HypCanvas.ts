@@ -1,6 +1,17 @@
 import Complex from "./Complex";
 import Xform from "./Xform";
 
+// bearing, offset, and orientation are the instructions a turtle needs to follow to get from the 
+// home position of the current frame to the home position of the other frame.
+// t.rotate(bearing); t.forward(offset); t.rotate(orientation);
+// This is, of course, equivalent to either a t.move(...); t.rotate(..) or t.rotate(); t.move(..), 
+// but in this slightly redundant representation the parameters are real-valued.
+export type FrameTransition = { bearing: number, offset: number, orientation: number };
+export type Anchor = { id: string, 
+                neighbors: { id: string, transition: FrameTransition }[], 
+                draw: (t: Turtle) => void
+              };
+export type WorldMap = Map<string, Anchor>;
 
 
 /**
@@ -471,6 +482,8 @@ export default class HypCanvas {
     }
     static origin_metric(z: Complex): number {
         return 2*Math.atanh(z.mag());
+    }
+    setMap(wm: WorldMap): void {
     }
 }
 

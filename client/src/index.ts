@@ -1,6 +1,6 @@
 import socket_client from "socket.io-client";
 import Complex from "./Complex";
-import { HypCanvas, Turtle } from "./HypCanvas";
+import { HypCanvas, Turtle, FrameTransition, Anchor, WorldMap } from "./HypCanvas";
 import { PolygonGeometry as PG } from "./PolygonGeometry";
 
 const x = new HypCanvas();
@@ -106,7 +106,9 @@ const drawSimple = () => {
 //makeButton("Simple", drawSimple);
 
 
-const drawSimplePolygons = (sides: number, order: number, depth: number) => {
+const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: any) => {
+    const styles: string[] = (opts && opts.styles) || 
+            ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
     const geom = new PG(sides, order);
     const e = geom.edgeLength;
     const r = geom.vertexRadius;
@@ -131,7 +133,6 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
 
         fifo.push([t, depth]);
     }
-    let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
     while (fifo.length > 0) {
         const [t, depth] = fifo.shift()!; // '!' is kosher since we check fifo.length
         let newCenter;
@@ -160,7 +161,7 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
         // store the new center
         centerCache.push(newCenter);
         t.relPolygon(verts);
-        t.fillStyle = styles[depth];
+        t.fillStyle = styles[depth % styles.length];
         t.fill();
         t.stroke();
         //logger(`drew at ${t.position()} with depth ${depth}`);
@@ -175,10 +176,13 @@ const drawSimplePolygons = (sides: number, order: number, depth: number) => {
         }
     }
 }
-makeButton("Squares", () =>drawSimplePolygons(4, 5, 4));
-makeButton("Pentagons", () =>drawSimplePolygons(5, 4, 4));
+makeButton("Squares", () => drawSimplePolygons(4, 5, 4));
+makeButton("Squares-6", () => drawSimplePolygons(4, 6, 4, { styles: ["black", "white"] }));
+makeButton("Pentagons", () => drawSimplePolygons(5, 4, 4, { styles: ["black", "white"] }));
+makeButton("Hexagons-6", () => drawSimplePolygons(6, 6, 2));
 makeButton("Heptagons", () => drawSimplePolygons(7, 3, 4));
-makeButton("Heptagons dual", () => drawSimplePolygons(3, 7, 8));
+makeButton("Triangles-7", () => drawSimplePolygons(3, 7, 8));
+makeButton("Triangles-8", () => drawSimplePolygons(3, 8, 6, { styles: ["black", "white"] }));
 
 
 const drawInfinityPie = () => {
@@ -289,17 +293,54 @@ document.body.appendChild(p);
 //drawHeptagonEdgeTree();
 drawSpiderweb();
 
-// bearing, offset, and orientation are the instructions a turtle needs to follow to get from the 
-// home position of the current frame to the home position of the other frame.
-// t.rotate(bearing); t.forward(offset); t.rotate(orientation);
-// This is, of course, equivalent to either a t.move(...); t.rotate(..) or t.rotate(); t.move(..), 
-// but in this slightly redundant representation the parameters are real-valued.
-type FrameTransition = { bearing: number, offset: number, orientation: number };
-type Anchor = { id: string, 
-                neighbors: { id: string, transition: FrameTransition }[], 
-                draw: (t: Turtle) => void
-              };
-const worldMap: Anchor[] = [];
+const doInfiniteSqures = () =>
+{
+    hc.reset();
+    const geom = new PG(4, 6);
+    const centerDistance = 2*geom.edgeRadius;
+    const left = Math.PI/2;
+
+    const drawSquare = (t: Turtle, fillStyle: string) => {
+        t.penDown();
+        t.rotate(geom.sliceAngle/2);
+        t.forward(geom.vertexRadius);
+        t.rotate(Math.PI - geom.internalAngle/2);
+        t.penDown();
+        t.forward(geom.edgeLength);
+        t.rotate(geom.externalAngle);
+        t.forward(geom.edgeLength);
+        t.rotate(geom.externalAngle);
+        t.forward(geom.edgeLength);
+        t.rotate(geom.externalAngle);
+        t.forward(geom.edgeLength);
+        t.fillStyle = fillStyle;
+        t.fill();
+    };
+    const map = new Map([
+        [ "black",  { 
+            id: "black", 
+            neighbors: [
+                { id: "white", transition: { bearing: 0, offset: centerDistance, orientation: 0 }},
+                { id: "white", transition: { bearing: left, offset: centerDistance, orientation: 0 }},
+                { id: "white", transition: { bearing: left*2, offset: centerDistance, orientation: 0 }},
+                { id: "white", transition: { bearing: left*3, offset: centerDistance, orientation: 0 }}],
+            draw: (t: Turtle) => drawSquare(t, "black")
+        }],
+        [ "white",  { 
+            id: "white", 
+            neighbors: [
+                { id: "black", transition: { bearing: 0, offset: centerDistance, orientation: 0 }},
+                { id: "black", transition: { bearing: left, offset: centerDistance, orientation: 0 }},
+                { id: "black", transition: { bearing: left*2, offset: centerDistance, orientation: 0 }},
+                { id: "black", transition: { bearing: left*3, offset: centerDistance, orientation: 0 }}],
+            draw: (t: Turtle) => drawSquare(t, "white")
+        }]
+    ]);
+    hc.setMap(map);
+}
+
+
+
 
 
 //console.log("index.ts is done");
