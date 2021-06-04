@@ -13,6 +13,10 @@ export type Anchor = { id: string,
               };
 export type WorldMap = Map<string, Anchor>;
 
+export type Drawer = {
+    drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
+    drawPoly(ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }): void;
+}
 
 /**
  * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disk model.
@@ -258,6 +262,7 @@ export default class HypCanvas {
     private size: number;
     private canvas?: HTMLCanvasElement;
     private insts: RenderInst[];
+    private drawFuncs: ((d: Drawer) => void)[];
 
     private pendingRedraw: boolean;
     private view: Xform;
@@ -274,6 +279,7 @@ export default class HypCanvas {
         this.view = Xform.identity;
         this.touch = undefined;
         this.logger = (msg) => { /* nothing */ };
+        this.drawFuncs = [];
         Object.seal(this);
     }
     private postRedraw() {
@@ -284,6 +290,7 @@ export default class HypCanvas {
     }
     clear() {
         this.insts = [];
+        this.drawFuncs = [];
         this.postRedraw();
     }
     reset() {
@@ -432,6 +439,40 @@ export default class HypCanvas {
         for (const i of this.insts) {
             i.exec(drc);
         }
+        const view = this.view;
+        const hc = this;
+        const d: Drawer = {
+            drawLine: (a: Complex, b: Complex, strokeStyle?: string) => {
+                drc.beginPath();
+                drc.moveTo(a);
+                drc.lineTo(b);
+                drc.ctx().strokeStyle = strokeStyle || "black";
+                drc.stroke();
+            },
+            drawPoly: (ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }) => {
+                if (ps.length == 0) {
+                    return;
+                }
+                drc.beginPath();
+                drc.moveTo(ps[0]);
+                for (let i = 1; i < ps.length; i++) {
+                    drc.lineTo(ps[i]);
+                }
+                drc.lineTo(ps[0]);
+                if (style && style.fillStyle) {
+                    drc.ctx().fillStyle = style.fillStyle;
+                    drc.fill();
+                }
+                if (style && style.strokeStyle) {
+                    drc.ctx().strokeStyle = style.strokeStyle;
+                    drc.stroke();
+                }
+            },
+        };
+        Object.freeze(d);
+        for (const f of this.drawFuncs) {
+            f(d);
+        };
         this.pendingRedraw = false;
     }
     private complexToXY(c: Complex): { x: number, y: number } {
@@ -492,6 +533,10 @@ export default class HypCanvas {
     }
     setMap(wm: WorldMap, anchorId: string): void {
         // set the WorldMap, focused on anchorId.
+    }
+    addDrawFunc(f: (d: Drawer) => void): void {
+        this.drawFuncs.push(f);
+        this.postRedraw();
     }
 }
 

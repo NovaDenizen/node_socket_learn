@@ -1,6 +1,6 @@
 import socket_client from "socket.io-client";
 import Complex from "./Complex";
-import { HypCanvas, Turtle, FrameTransition, Anchor, WorldMap } from "./HypCanvas";
+import { HypCanvas, Drawer, Turtle, FrameTransition, Anchor, WorldMap } from "./HypCanvas";
 import { PolygonGeometry as PG } from "./PolygonGeometry";
 import DiskTurtle from "./DiskTurtle";
 
@@ -63,21 +63,25 @@ const drawSpiderweb = () => {
     const deltaR = 5 / n;
     hc.reset();
     let deltaTheta = Math.PI * 2 / n;
-    for (let ri = 1; ri < n; ri++) {
-        for (let thetai = 0; thetai < n; thetai++) {
-            // radial line
-            let r = deltaR * ri;
-            let theta = deltaTheta * thetai;
-            // the 'base' point
-            let x = HypCanvas.polar(r, theta);
-            // the point inward
-            let y = HypCanvas.polar(r - deltaR, theta);
-            hc.addLine(x, y);
-            // the next circumferential point
-            let z = HypCanvas.polar(r, theta + deltaTheta);
-            hc.addLine(x, z);
+    const drawer = (d: Drawer) => {
+        for (let ri = 1; ri < n; ri++) {
+            for (let thetai = 0; thetai < n; thetai++) {
+                // radial line
+                let r = deltaR * ri;
+                let theta = deltaTheta * thetai;
+                // the 'base' point
+                let x = HypCanvas.polar(r, theta);
+                // the point inward
+                let y = HypCanvas.polar(r - deltaR, theta);
+                d.drawLine(x, y);
+                // the next circumferential point
+                let z = HypCanvas.polar(r, theta + deltaTheta);
+                d.drawLine(x, z);
+            }
         }
     }
+    hc.addDrawFunc(drawer);
+    logger("spiderweb using new drawer");
 };
 makeButton("spiderweb", drawSpiderweb);
 
@@ -300,6 +304,7 @@ const doInfiniteSqures = () =>
     const geom = new PG(4, 6);
     const centerDistance = 2*geom.edgeRadius;
     const left = Math.PI/2;
+    let squarePts: Complex[] = [];
 
     const drawSquare = (t: Turtle, fillStyle: string) => {
         t.penDown();
