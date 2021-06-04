@@ -1,6 +1,11 @@
 import Complex from "./Complex";
 import Xform from "./Xform";
 
+export type Drawer = {
+    drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
+    drawPoly(ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }): void;
+}
+
 // bearing, offset, and orientation are the instructions a turtle needs to follow to get from the 
 // home position of the current frame to the home position of the other frame.
 // t.rotate(bearing); t.forward(offset); t.rotate(orientation);
@@ -9,14 +14,10 @@ import Xform from "./Xform";
 export type FrameTransition = { bearing: number, offset: number, orientation: number };
 export type Anchor = { id: string, 
                 neighbors: { id: string, transition: FrameTransition }[], 
-                draw: (t: Turtle) => void
+                draw: (t: Drawer) => void
               };
 export type WorldMap = Map<string, Anchor>;
 
-export type Drawer = {
-    drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
-    drawPoly(ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }): void;
-}
 
 /**
  * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disk model.
@@ -198,70 +199,10 @@ class DiskRenderingContext {
     }
 }
 
-interface RenderInst {
-    exec(ctx: DiskRenderingContext): void;
-}
-class MoveTo implements RenderInst {
-    p: Complex;
-    constructor(p: Complex) {
-        this.p = p;
-    }
-    exec(ctx: DiskRenderingContext): void {
-        ctx.moveTo(this.p);
-    }
-}
-class LineTo implements RenderInst {
-    p: Complex;
-    constructor(p: Complex) {
-        this.p = p;
-    }
-    exec(ctx: DiskRenderingContext): void {
-        ctx.lineTo(this.p);
-    }
-}
-class BeginPath implements RenderInst {
-    exec(ctx: DiskRenderingContext): void {
-        ctx.beginPath();
-    }
-}
-class ClosePath implements RenderInst {
-    exec(ctx: DiskRenderingContext): void {
-        ctx.closePath();
-    }
-}
-class DoStroke implements RenderInst {
-    exec(ctx: DiskRenderingContext): void {
-        ctx.stroke();
-    }
-}
-class DoFill implements RenderInst {
-    exec(ctx: DiskRenderingContext): void {
-        ctx.fill();
-    }
-}
-class SetStroke implements RenderInst {
-    style: string;
-    constructor(style: string) {
-        this.style = style;
-    }
-    exec(ctx: DiskRenderingContext): void {
-        ctx.ctx().strokeStyle = this.style;
-    }
-}
-class SetFill implements RenderInst {
-    style: string;
-    constructor(style: string) {
-        this.style = style;
-    }
-    exec(ctx: DiskRenderingContext): void {
-        ctx.ctx().fillStyle = this.style;
-    }
-}
 
 export default class HypCanvas {
     private size: number;
     private canvas?: HTMLCanvasElement;
-    private insts: RenderInst[];
     private drawFuncs: ((d: Drawer) => void)[];
 
     private pendingRedraw: boolean;
@@ -273,7 +214,6 @@ export default class HypCanvas {
     }
     constructor(opts?: any) {
         this.size = opts?.size || 500;
-        this.insts = [];;
         this.canvas = undefined;
         this.pendingRedraw = false;
         this.view = Xform.identity;
@@ -289,7 +229,6 @@ export default class HypCanvas {
         }
     }
     clear() {
-        this.insts = [];
         this.drawFuncs = [];
         this.postRedraw();
     }
@@ -436,9 +375,6 @@ export default class HypCanvas {
         }
         const drc = new DiskRenderingContext(this, canvas, this.view);
         drc.clear();
-        for (const i of this.insts) {
-            i.exec(drc);
-        }
         const view = this.view;
         const hc = this;
         const d: Drawer = {
@@ -496,32 +432,6 @@ export default class HypCanvas {
         const res = Complex.unit(radians).scale(diskR);
         return res;
     }
-    addLine(p1: Complex, p2: Complex): void {
-        // this.logger(`addLine(${p1}, ${p2})`);
-        this.insts.push(new BeginPath());
-        this.insts.push(new MoveTo(p1));
-        this.insts.push(new LineTo(p2));
-        this.insts.push(new DoStroke())
-        this.postRedraw();
-    }
-    addPolygonPath(ps: Complex[]): void {
-        if (ps.length === 0) {
-            return;
-        }
-        this.insts.push(new MoveTo(ps[0]));
-        this.insts.push(new BeginPath());
-        for (let i = 1; i < ps.length; i++) {
-            this.insts.push(new LineTo(ps[i]));
-        }
-        this.insts.push(new LineTo(ps[0]));
-    }
-    pushInst(i: RenderInst): void {
-        this.insts.push(i);
-        this.postRedraw();
-    }
-    turtle(): Turtle {
-        return new Turtle(this);
-    }
     static metric(z1: Complex, z2: Complex): number {
         const termNumerator = z1.sub(z2);
         // if |z1| < 1 && |z2| < 1 then this is > 0
@@ -542,171 +452,5 @@ export default class HypCanvas {
 
 export { HypCanvas };
 
-export class Turtle {
-    readonly canvas: HypCanvas;
-    // when penIsDown, moves are added via HypCanvas.pushInst
-    // when !penIsDown, turtle is in "calculate" mode, where positions etc. can be calculated without
-    // causing anything to be added to HypCanvas's render list.
-    private _penIsDown: boolean = false;
-    private _strokeStyle: string = "#000";
-    private _fillStyle: string = "#000";;
-    // sends the origin and the +x vector to the turtle location and forward vector.
-    private xform: Xform = Xform.identity;
-    constructor(canvas: HypCanvas) {
-        this.canvas = canvas;
-        Object.seal(this);
-    }
-    clone(): Turtle {
-        const t = new Turtle(this.canvas);
-        t.xform = this.xform;
-        t._penIsDown = this.penIsDown;
-        t._strokeStyle = this._strokeStyle;
-        t._fillStyle = this._fillStyle;
-        return t;
-    }
-    rotate(radians: number): void {
-        this.xform = this.xform.compose(Xform.rotate(radians));
-    }
-    forward(distance: number): void {
-        // turtle-local end point of line, as if turtle was homed.
-        const offset = HypCanvas.polar(distance, 0);
-        this.move(offset);
-    }
-
-    // Assuming turtle is at home position (at origin, pointing right), move it to offset.
-    // So offset is the movement relative to the Turtle's reference frame.
-    move(offset: Complex): void {
-        // start point of line
-        const start = this.xform.xform(Complex.zero);
-        const fwd = Xform.originToPoint(offset);
-        const newXform = this.xform.compose(fwd);
-        const end = newXform.xform(Complex.zero);
-        if (this.penIsDown) {
-            this.canvas.pushInst(new LineTo(end));
-            this.canvas.pushInst(new DoStroke());
-            this.canvas.pushInst(new BeginPath());
-        }
-        this.xform = newXform;
-    }
-
-    get penIsDown() {
-        return this._penIsDown;
-    }
-    penDown() {
-        if (!this._penIsDown) {
-            this.canvas.pushInst(new BeginPath());
-            this.canvas.pushInst(new MoveTo(this.position()));
-            this._penIsDown = true;
-        }
-    }
-    penUp() {
-        if (this._penIsDown) {
-            this._penIsDown = false;
-        }
-    }
-    position(): Complex {
-        return this.xform.xform(Complex.zero);
-    }
-    idealPosition(): Complex {
-        return this.xform.xform(Complex.one);
-    }
-    // rfr stands for 'rotate, forward, rotate'.
-    // Given another turtle, determine values such that
-    // this.rotate(rot1); this.forward(forward); this.rotate(rot2);
-    // will place this turtle identically to other.
-    rfr(other: Turtle): { rot1: number, forward: number, rot2: number } | null {
-        // xforms are associative and inversions compose to the identity.
-        // this.compose(difference) == other
-        // this.invert().compose(this.compose(difference)) == this.invert().compose(other)
-        // difference == this.inverse().compose(other);
-        const diff = this.xform.invert().compose(other.xform);
-        const dt = diff.t;
-        const db = diff.b;
-        // using haskell-style lambdas and functoin composition
-        // diff = (*dt) . (t=1, b=db)
-        // db is not likely to be both real and positive.
-        // (t, b) = \z . t*(z + b)/(b_*z + 1)
-        // (t=1, b=db) = \z . (z + db)/(db_*z + 1)
-        // let q = db/|db|, |q| == 1, qq_ = 1
-        // (*q_) . (t=1, b=db) . (*q) $ z = q_ * (qz + db)/(db_*qz + 1)
-        //                                  = (z + q_*db)/(db_*qz + 1)
-        //                                  = (t=1, b=q_db) $ z
-        // (*q_) . (t=1, b=db) . (*q) = (t=1, b=q_db)
-        // prepend both with (*q) and append both with (*q_)
-        // (*q) . (*q_) . (t=1, b=db) . (*q) . (*q_) = (*q) . (t=1, b=q_db) . (*q_)
-        // (*qq_) is identity
-        // (t=1, b=db) = (*q) . (t=1, b=q_db) . (*q_)
-        // q_db = db_ / |db| * db = |db|^2 / |db| = |db|
-        // diff = (t=dt, b=0) . (t=1, b=db)
-        //      = (t=dt, b=0) . (*q) . (t=1, b=q_db) . (*q_)
-        //      = (t=dt*q, b=0) . (t=1,b=q_db) . (t=q_, b=0)
-        //      = [rotate by dt*q] . [forward |db|] . [rotate by q_]
-        if (db.magSq() < 0.000001) {
-            // no movement, just a rotation.
-            return { rot1: Math.atan2(dt.b, dt.a), forward: 0, rot2: 0 };
-        }
-        const q = db.normalize();
-        const t1 = dt.mul(q);
-        const rot1 = Math.atan2(t1.b, t1.a);
-        const forward = db.mag();
-        const rot2 = Math.atan2(-q.b, q.a);
-        return { rot1, forward, rot2 };
-    }
-    stroke() {
-        this.canvas.pushInst(new DoStroke());
-    }
-    set strokeStyle(s: string) {
-        this.canvas.pushInst(new SetStroke(s));
-        this._strokeStyle = s;
-    }
-    get strokeStyle(): string {
-        return this._strokeStyle;
-    }
-    fill() {
-        this.canvas.pushInst(new DoFill());
-    }
-    set fillStyle(s: string) {
-        this.canvas.pushInst(new SetFill(s));
-        this._fillStyle = s;
-    }
-    get fillStyle(): string {
-        return this._fillStyle;
-    }
-    relPolygon(ps: Complex[]) {
-        this.canvas.pushInst(new BeginPath());
-        if (ps.length > 0) {
-            this.canvas.pushInst(new MoveTo(this.xform.xform(ps[0])));
-        }
-        for (let i = 1; i < ps.length; i++) {
-            this.canvas.pushInst(new LineTo(this.xform.xform(ps[i])));
-        }
-        if (ps.length > 0) {
-            this.canvas.pushInst(new LineTo(this.xform.xform(ps[0])));
-        }
-    }
-    home(): void {
-        const p = this.position();
-        const x = Xform.originToPoint(p);
-        this.xform = x;
-        // We have now effectively canceled out our rotation without moving.
-        // Using move() here takes care of lines, pen management, etc.
-        this.move(p.neg());
-        // this is redundant, I think.
-        this.xform = Xform.identity;
-    }
-    relativePosition(p: Complex): Complex {
-        return this.xform.invert().xform(p);
-    }
-    aimAt(p: Complex): void {
-        const rp = this.relativePosition(p);
-        if (rp.magSq() < 0.000000001) {
-            throw new Error("point is too nearby to aim at");
-        }
-        const bearing = Math.atan2(rp.b, rp.a);
-        this.rotate(bearing);
-    }
-
-
-}
 
 

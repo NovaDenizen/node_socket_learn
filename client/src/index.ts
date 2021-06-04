@@ -1,6 +1,6 @@
 import socket_client from "socket.io-client";
 import Complex from "./Complex";
-import { HypCanvas, Drawer, Turtle, FrameTransition, Anchor, WorldMap } from "./HypCanvas";
+import { HypCanvas, Drawer, FrameTransition, Anchor, WorldMap } from "./HypCanvas";
 import { PolygonGeometry as PG } from "./PolygonGeometry";
 import DiskTurtle from "./DiskTurtle";
 
@@ -302,7 +302,8 @@ const doInfiniteSqures = () =>
     const left = Math.PI/2;
     let squarePts: Complex[] = [];
 
-    const drawSquare = (t: Turtle, fillStyle: string) => {
+    const drawSquare = (d: Drawer, fillStyle: string) => {
+    /*
         t.penDown();
         t.rotate(geom.sliceAngle/2);
         t.forward(geom.vertexRadius);
@@ -316,7 +317,7 @@ const doInfiniteSqures = () =>
         t.rotate(geom.externalAngle);
         t.forward(geom.edgeLength);
         t.fillStyle = fillStyle;
-        t.fill();
+        t.fill();               */
     };
     const map = new Map([
         [ "black",  { 
@@ -326,7 +327,7 @@ const doInfiniteSqures = () =>
                 { id: "white", transition: { bearing: left, offset: centerDistance, orientation: 0 }},
                 { id: "white", transition: { bearing: left*2, offset: centerDistance, orientation: 0 }},
                 { id: "white", transition: { bearing: left*3, offset: centerDistance, orientation: 0 }}],
-            draw: (t: Turtle) => drawSquare(t, "black")
+            draw: (d: Drawer) => drawSquare(d, "black")
         }],
         [ "white",  { 
             id: "white", 
@@ -335,7 +336,7 @@ const doInfiniteSqures = () =>
                 { id: "black", transition: { bearing: left, offset: centerDistance, orientation: 0 }},
                 { id: "black", transition: { bearing: left*2, offset: centerDistance, orientation: 0 }},
                 { id: "black", transition: { bearing: left*3, offset: centerDistance, orientation: 0 }}],
-            draw: (t: Turtle) => drawSquare(t, "white")
+            draw: (d: Drawer) => drawSquare(d, "white")
         }]
     ]);
     hc.setMap(map, "white");
