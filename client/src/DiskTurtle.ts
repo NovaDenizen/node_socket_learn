@@ -20,7 +20,9 @@ export default class DiskTurtle {
         }
         Object.seal(this);
     }
-    static readonly home = new DiskTurtle(Xform.identity);
+    home(): void {
+        this.xform = Xform.identity;
+    }
     rotate(radians: number): void {
         this.xform = this.xform.compose(Xform.rotate(radians));
     }

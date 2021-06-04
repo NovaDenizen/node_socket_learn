@@ -208,11 +208,10 @@ const drawIdealRays = () => {
     const delta = 0.25;
     const n = 8;
     let leftIdeal = new Complex(-1, 0);
-    let t = hc.turtle();
+    let t = new DiskTurtle();
+    let polys: [Complex[], any][] = [];
     let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
     for(let i = -n; i < n; i++) {
-        t.penUp();
-        t.home();
         let bottom = HypCanvas.polar(delta*i, Math.PI/2); 
         let top = HypCanvas.polar(delta*(i+1), Math.PI/2);
         t.move(top);
@@ -225,10 +224,16 @@ const drawIdealRays = () => {
         t.rotate(Math.PI)
         const bottomRightIdeal = t.idealPosition();
         t.home();
-        t.fillStyle = styles[(i + n) % styles.length];
-        t.relPolygon([leftIdeal, bottom, bottomRightIdeal, topRightIdeal, top]);
-        t.fill();
+        const fillStyle = styles[(i + n) % styles.length];
+        polys.push([[leftIdeal, bottom, bottomRightIdeal, topRightIdeal, top], { fillStyle }]);
     }
+    const drawer = (d: Drawer) => {
+        for (const [p, style] of polys) {
+            d.drawPoly(p, style);
+        }
+    };
+    hc.addDrawFunc(drawer);
+
 };
 makeButton("Ideal Rays", drawIdealRays);
 
