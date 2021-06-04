@@ -179,18 +179,23 @@ const drawInfinityPie = () => {
     hc.reset();
     const slices = 30;
     const angle = Math.PI*2/slices;
-    const t = hc.turtle();
+    const t = new DiskTurtle();
     const styles = ["red", "white", "blue"];
+    let polys: [Complex[], any][] = [];
     for (let i = 0; i < slices; i++) {
         const ideal1 = t.idealPosition();
         t.rotate(angle);
         const ideal2 = t.idealPosition();
-        hc.addPolygonPath([Complex.zero, ideal1, ideal2]);
-
         const styleIdx = i % styles.length;
-        t.fillStyle = styles[styleIdx];
-        t.fill();
+        const fillStyle = styles[styleIdx];
+        polys.push([[Complex.zero, ideal1, ideal2], { fillStyle }]);
     }
+    const drawer = (d: Drawer) => {
+        for (const [p, style] of polys) {
+            d.drawPoly(p, style);
+        }
+    }
+    hc.addDrawFunc(drawer);
 };
 
 document.body.appendChild(p);
