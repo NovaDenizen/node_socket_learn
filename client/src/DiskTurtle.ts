@@ -1,10 +1,11 @@
 import Xform from "./Xform";
 import Complex from "./Complex";
+// TODO: HypCanvas seems mostly irrelevant, it should be broken up
 import HypCanvas from "./HypCanvas";
 
 // this is a Turtle class that makes it less horrible to do geometric things with 
 // a Poincare Disk view of the hyperbolic plane.
-export class DiskTurtle {
+export default class DiskTurtle {
     // sends the origin and the +x vector to the turtle location and forward vector.
     xform: Xform;
     constructor(arg?: Xform | DiskTurtle) {

@@ -2,6 +2,7 @@ import socket_client from "socket.io-client";
 import Complex from "./Complex";
 import { HypCanvas, Turtle, FrameTransition, Anchor, WorldMap } from "./HypCanvas";
 import { PolygonGeometry as PG } from "./PolygonGeometry";
+import DiskTurtle from "./DiskTurtle";
 
 const x = new HypCanvas();
 
