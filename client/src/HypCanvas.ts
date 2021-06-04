@@ -414,7 +414,14 @@ export default class HypCanvas {
         this.postRedraw();
     }
     private draw() {
-        // console.log("redrawing, with %d lines", this.lines.length);
+        // TODO: Change to WorldMap rendering schema.
+        //     this.xform will be relative to the currnet main anchor.
+        //     User scrolls around, this.xform gets updated.
+        //     When another anchor gets closer to the center of the view, 
+        //     that anchor takes over as the main anchor
+        //     Traversal will stop when an anchor's transformed position is larger than some bound (0.95?)
+        //
+        // TODO: switch turtle back to immediate mode, use anonymous functions for drawing instructions.
         const canvas = this.canvas;
         // console.log(canvas);
         if (!canvas) {
@@ -483,8 +490,10 @@ export default class HypCanvas {
     static origin_metric(z: Complex): number {
         return 2*Math.atanh(z.mag());
     }
-    setMap(wm: WorldMap): void {
+    setMap(wm: WorldMap, anchorId: string): void {
+        // set the WorldMap, focused on anchorId.
     }
+    
 }
 
 export { HypCanvas };
