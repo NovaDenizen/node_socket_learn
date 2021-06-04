@@ -239,22 +239,27 @@ makeButton("Ideal Rays", drawIdealRays);
 
 const idealFan = (startAng: number, endAng: number, focus: Complex, n: number) => {
     let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
-    const t = hc.turtle();
     let range = endAng - startAng;
     let deltaAng = range/n;
+    let polys: [Complex[], any][] = [];
     for(let i = 0; i < n; i++) {
         let a1 = startAng + deltaAng*i;
         let ideal1 = Complex.unit(a1);
         let a2 = a1 + deltaAng;
         let ideal2 = Complex.unit(a2);
-        t.fillStyle = styles[i % styles.length];
-        t.relPolygon([focus, ideal1, ideal2]);
-        t.fill();
+        const fillStyle = styles[i % styles.length];
+        polys.push([[focus, ideal1, ideal2], { fillStyle }]);
     }
+    const drawer = (d: Drawer) => {
+        for (const [p, style] of polys) {
+            d.drawPoly(p, style);
+        }
+    };
+    hc.addDrawFunc(drawer);
 };
 const dumbbell = () => {
     hc.reset();
-    const t = hc.turtle();
+    const t = new DiskTurtle();
     t.forward(0.5);
     const rightFocus = t.position();
     const leftFocus = rightFocus.neg();
@@ -262,16 +267,14 @@ const dumbbell = () => {
     idealFan(-Math.PI/2, Math.PI/2, rightFocus, n);
     idealFan(Math.PI/2, 3*Math.PI/2, leftFocus, n);
     // draw the line connecting the focii
-    let leftDelta = t.relativePosition(leftFocus);
-    t.penDown();
-    t.move(leftDelta);
+    hc.addDrawFunc((d: Drawer) => d.drawLine(leftFocus, rightFocus));
 }
 
 makeButton("Dumbbell", dumbbell);
 
 const tripleDumbbell = () => {
     hc.reset();
-    const t = hc.turtle();
+    const t = new DiskTurtle();
     t.forward(0.5);
     const f1 = t.position();
     const rot120 = Complex.unit(Math.PI*2/3);
@@ -281,9 +284,7 @@ const tripleDumbbell = () => {
     idealFan(-Math.PI/3, Math.PI/3, f1, n);
     idealFan(Math.PI/3, Math.PI, f2, n);
     idealFan(-Math.PI, -Math.PI/3, f3, n);
-    t.home();
-    t.relPolygon([f1, f2, f3]);
-    t.stroke();
+    hc.addDrawFunc((d: Drawer) => d.drawPoly([f1, f2, f3], { strokeStyle: "black" }));
 }
 makeButton("3Dumbbell", tripleDumbbell);
 
