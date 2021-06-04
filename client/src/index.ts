@@ -336,11 +336,8 @@ const doInfiniteSqures = () =>
             draw: (t: Turtle) => drawSquare(t, "white")
         }]
     ]);
-    hc.setMap(map);
+    hc.setMap(map, "white");
 }
-
-
-
 
 
 //console.log("index.ts is done");

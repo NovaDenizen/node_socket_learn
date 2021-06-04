@@ -493,7 +493,6 @@ export default class HypCanvas {
     setMap(wm: WorldMap, anchorId: string): void {
         // set the WorldMap, focused on anchorId.
     }
-    
 }
 
 export { HypCanvas };
