@@ -86,29 +86,6 @@ const drawSpiderweb = () => {
 makeButton("spiderweb", drawSpiderweb);
 
 
-const drawSimple = () => {
-    // draw a few attempted euclidean squares
-    const deltaDist = 0.1;
-    const n = 10;
-    hc.reset();
-    for (let i = 1; i <= n; i++)
-    {  // trace some incomplete squares, 
-        const t = hc.turtle();
-        const d = i * deltaDist;
-        const turn = Math.PI/2;
-        t.penDown();
-        t.forward(d);
-        t.rotate(turn);
-        t.forward(d);
-        t.rotate(turn);
-        t.forward(d);
-        t.rotate(turn);
-        t.forward(d);
-        t.rotate(turn);
-    }
-};
-// this is too basic to include while things are working
-//makeButton("Simple", drawSimple);
 
 
 const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: any) => {
@@ -120,19 +97,20 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
     const turn = geom.externalAngle;
     hc.reset();
     let centerCache: Complex[] = [];
+    let polys: [Complex[], string][] = [];
     let verts: Complex[] = [];
     {
-        const t = hc.turtle();
+        const t = new DiskTurtle();
         for(let i = 0; i < sides; i++) {
             verts.push(t.position());
             t.forward(e);
             t.rotate(turn);
         }
     }
-    let fifo: [Turtle, number][] = [];
+    let fifo: [DiskTurtle, number][] = [];
     {
         // move turtle to position so that first poly is centered on origin.
-        let t = hc.turtle();
+        let t = new DiskTurtle();
         t.forward(geom.vertexRadius);
         t.rotate(Math.PI - geom.internalAngle/2);
 
@@ -143,7 +121,7 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
         let newCenter;
         let skip = false;
         {
-            const t2 = t.clone();
+            const t2 = new DiskTurtle(t);
             t2.forward(geom.edgeLength/2);
             t2.rotate(Math.PI/2);
             t2.forward(geom.edgeRadius); 
@@ -165,21 +143,28 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
 
         // store the new center
         centerCache.push(newCenter);
-        t.relPolygon(verts);
-        t.fillStyle = styles[depth % styles.length];
-        t.fill();
-        t.stroke();
-        //logger(`drew at ${t.position()} with depth ${depth}`);
+        let newpoly: Complex[] = [];
+        for (const v of verts) {
+            newpoly.push(t.xform.xform(v));
+        }
+        polys.push([newpoly, styles[depth % styles.length]]);
         if (depth > 0) {
             t.rotate(geom.internalAngle);
             for (let i = 0; i < sides; i++) {
-                fifo.push([t.clone(), depth-1]);
+                fifo.push([new DiskTurtle(t), depth-1]);
                 //logger(`pushed [${t.position()}, ${depth-1}] now fifo.length==${fifo.length}`);
                 t.forward(e);
                 t.rotate(-turn);
             }
         }
     }
+
+    const drawer = (d: Drawer) => {
+        for (const [verts, style] of polys) {
+            d.drawPoly(verts, { fillStyle: style, strokeStyle: "black" });
+        }
+    };
+    hc.addDrawFunc(drawer);
 }
 makeButton("Squares", () => drawSimplePolygons(4, 5, 4));
 makeButton("Squares-6", () => drawSimplePolygons(4, 6, 4, { styles: ["black", "white"] }));
