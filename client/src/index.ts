@@ -30,19 +30,21 @@ socket.on("xnewdata", (data: any[]) => {
     }
 });
 
-const origin_img: Promise<ImageBitmap> = (() => {
-    const img = document.createElement('img');
-    img.width = 30;
-    img.height = 30;
-    img.src = "origin.svg";
-    return createImageBitmap(img);
-})();
-
 const hc = new HypCanvas({ size: 400 });
 const logger = (s: string) => { socket.emit("clientlog", s); };
 hc.logger = logger;
 document.body.appendChild(hc.makeCanvas());
 let p = document.createElement("p");
+
+let origin_img: ImageBitmap | undefined = undefined;
+
+{
+    const img = document.createElement('img');
+    img.width = 30;
+    img.height = 30;
+    img.src = "origin.svg";
+    createImageBitmap(img).then((bm) => { origin_img = bm; hc.postRedraw()});
+}
 
 const makeButton = (name: string, call: () => void) => {
     const b = document.createElement("input");

@@ -4,7 +4,7 @@ import Xform from "./Xform";
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
     drawPoly(ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }): void;
-    drawDumbImage(x: Complex, image: ImageBitmap | Promise<ImageBitmap>): void;
+    drawDumbImage(x: Complex, image?: ImageBitmap): void;
 }
 
 // bearing, offset, and orientation are the instructions a turtle needs to follow to get from the 
@@ -223,7 +223,7 @@ export default class HypCanvas {
         this.drawFuncs = [];
         Object.seal(this);
     }
-    private postRedraw() {
+    postRedraw() {
         if (!this.pendingRedraw) {
             requestAnimationFrame(() => this.draw());
             this.pendingRedraw = true;
@@ -405,7 +405,8 @@ export default class HypCanvas {
                     drc.stroke();
                 }
             },
-            drawDumbImage: (p: Complex, img: ImageBitmap | Promise<ImageBitmap>) => {
+            drawDumbImage: (p: Complex, img: ImageBitmap) => {
+                
 
             }
         };
