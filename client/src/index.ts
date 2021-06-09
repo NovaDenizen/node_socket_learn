@@ -30,12 +30,13 @@ socket.on("xnewdata", (data: any[]) => {
     }
 });
 
-const newdatabutton = document.getElementById("newdatabutton");
-if (newdatabutton) {
-    newdatabutton.onclick = () => {
-        socket.emit("getnewdata");
-    };
-}
+const origin_img: Promise<ImageBitmap> = (() => {
+    const img = document.createElement('img');
+    img.width = 30;
+    img.height = 30;
+    img.src = "origin.svg";
+    return createImageBitmap(img);
+})();
 
 const hc = new HypCanvas({ size: 400 });
 const logger = (s: string) => { socket.emit("clientlog", s); };
@@ -64,6 +65,7 @@ const drawSpiderweb = () => {
     hc.reset();
     let deltaTheta = Math.PI * 2 / n;
     const drawer = (d: Drawer) => {
+        d.drawDumbImage(Complex.zero, origin_img);
         for (let ri = 1; ri < n; ri++) {
             for (let thetai = 0; thetai < n; thetai++) {
                 // radial line
