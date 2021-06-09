@@ -4,7 +4,7 @@ import Xform from "./Xform";
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
     drawPoly(ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }): void;
-    drawDumbImage(x: Complex, image?: ImageBitmap): void;
+    drawDumbImage(x: Complex, image: any): void;
 }
 
 // bearing, offset, and orientation are the instructions a turtle needs to follow to get from the 
@@ -98,6 +98,15 @@ class DiskRenderingContext {
         const y = -p.b * this.scale + this.yOffset;
         return { x, y };
     }
+    drawImage(p: Complex, img: any): void {
+        if (!img) {
+            return;
+        }
+        const SIZE = 30;
+        const sp = this.toScreen(this.viewed(p));
+        this.ctx().drawImage(img, sp.x - SIZE/2, sp.y - SIZE/2, SIZE, SIZE);
+    }
+
     moveTo(p: Complex) {
         const xp = this.viewed(p);
         const sp = this.toScreen(xp);
@@ -405,9 +414,8 @@ export default class HypCanvas {
                     drc.stroke();
                 }
             },
-            drawDumbImage: (p: Complex, img: ImageBitmap) => {
-                
-
+            drawDumbImage: (p: Complex, img: any) => {
+                drc.drawImage(p,img);
             }
         };
         Object.freeze(d);

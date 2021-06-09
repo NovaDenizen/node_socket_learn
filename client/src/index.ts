@@ -36,15 +36,12 @@ hc.logger = logger;
 document.body.appendChild(hc.makeCanvas());
 let p = document.createElement("p");
 
-let origin_img: ImageBitmap | undefined = undefined;
-
-{
-    const img = document.createElement('img');
-    img.width = 30;
-    img.height = 30;
-    img.src = "origin.svg";
-    createImageBitmap(img).then((bm) => { origin_img = bm; hc.postRedraw()});
-}
+const origin_img = document.createElement('img');
+origin_img.width = 30;
+origin_img.height = 30;
+origin_img.src = "origin.svg";
+origin_img.onload = () => hc.postRedraw();
+p.appendChild(origin_img);
 
 const makeButton = (name: string, call: () => void) => {
     const b = document.createElement("input");
@@ -67,7 +64,6 @@ const drawSpiderweb = () => {
     hc.reset();
     let deltaTheta = Math.PI * 2 / n;
     const drawer = (d: Drawer) => {
-        d.drawDumbImage(Complex.zero, origin_img);
         for (let ri = 1; ri < n; ri++) {
             for (let thetai = 0; thetai < n; thetai++) {
                 // radial line
@@ -83,9 +79,12 @@ const drawSpiderweb = () => {
                 d.drawLine(x, z);
             }
         }
+        if (origin_img) {
+            d.drawDumbImage(Complex.zero, origin_img);
+            logger("spiderweb drawing dumb origin image");
+        }
     }
     hc.addDrawFunc(drawer);
-    logger("spiderweb using new drawer");
 };
 makeButton("spiderweb", drawSpiderweb);
 
