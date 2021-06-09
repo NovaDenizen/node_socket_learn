@@ -1,0 +1,4 @@
+
+rm -f dist/*.svg
+cp svgs/*.svg dist
+

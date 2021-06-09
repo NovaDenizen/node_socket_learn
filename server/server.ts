@@ -25,10 +25,9 @@ const cfg = new (class CFG {
         return path.join(this.CWD, dir);
     }
     httpsOptions(): object {
-        return {
-            key: fs.readFileSync(path.join(this.CERT_PATH, 'fullkeychain.pem')),
-            cert: fs.readFileSync(path.join(this.CERT_PATH, 'fullkeychain.pem')),
-        };
+        const key = fs.readFileSync(path.join(this.CERT_PATH, 'fullkeychain.pem'));
+        const cert = key;
+        return { key, cert };
     }
 })()
 
@@ -36,7 +35,9 @@ const cfg = new (class CFG {
 const server = https.createServer(cfg.httpsOptions(), app);
 const io = new socket_io.Server(server);
 
-app.use('/modules', express.static(cfg.fromDev('../client/dist')));
+// hopefully, using '/' twice like this will cause named files under '/' to be served up from
+// client/dist, and the bare 'GET /' to be served up by client.html.
+app.use('/', express.static(cfg.fromDev('../client/dist/')));
 
 app.get('/', (req: express.Request, res: express.Response) => {
     res.sendFile(cfg.fromDev('client.html'));

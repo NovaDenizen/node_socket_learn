@@ -1,7 +1,7 @@
 {
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "build": "npm exec webpack",
+        "build": "svgs/do_sgvs && npm exec webpack",
         "tslint": "tslint --exclude src/index.ts --project . && tslint -c tslint_index.json src/index.ts",
         "start": "npm exec webpack"
     },
