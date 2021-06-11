@@ -36,12 +36,21 @@ hc.logger = logger;
 document.body.appendChild(hc.makeCanvas());
 let p = document.createElement("p");
 
-const origin_img = document.createElement('img');
-origin_img.width = 30;
-origin_img.height = 30;
-origin_img.src = "origin.svg";
-origin_img.onload = () => hc.postRedraw();
+const makeCanvasImage: (src: string) => any = (src) => {
+    const img = document.createElement('img');
+    img.width = 30;
+    img.height = 30;
+    img.src = src;
+    img.onload = () => hc.postRedraw();
+    return img;
+};
+
+
+const origin_img = makeCanvasImage("origin.svg");
 p.appendChild(origin_img);
+
+const billy_img = makeCanvasImage("billy_cropped.png");
+p.appendChild(billy_img);
 
 const makeButton = (name: string, call: () => void) => {
     const b = document.createElement("input");
@@ -79,10 +88,7 @@ const drawSpiderweb = () => {
                 d.drawLine(x, z);
             }
         }
-        if (origin_img) {
-            d.drawDumbImage(Complex.zero, origin_img);
-            logger("spiderweb drawing dumb origin image");
-        }
+        d.drawDumbImage(Complex.zero, billy_img);
     }
     hc.addDrawFunc(drawer);
 };
