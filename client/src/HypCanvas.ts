@@ -27,20 +27,8 @@ export type WorldMap = Map<string, Anchor>;
  * TODO: Model/view separation
  */
 
-/*
-
-This is not adequate.
-There sure are a lot of remember-and-replay stages involved here.
-
-We need a record of all drawing instructions stored in a view-independent manner,
-so that when the view changes we can rerun them to draw the current display in the
-new view xform.
-
-We need a DiskRenderingContext that consumes straight-line operations like a
-CanvasRenderingContext2D, applies a view xform, turns the line into a screen-coordinate arc,
-and calls CanvasRenderingContext2D.arcTo().
-
-*/
+// everything with squared magnitude bigger than this is considered an ideal point
+const IDEAL_BOUNDARY_MAGSQ: number = 0.999999;
 class DiskRenderingContext {
     private hypCanvas: HypCanvas;
     private firstPathPoint: Complex;
@@ -88,9 +76,6 @@ class DiskRenderingContext {
         return this.view.xform(p);
     }
     ctx(): CanvasRenderingContext2D {
-        if (!this.ctx2d) {
-            throw new Error("couldn't create canvas context");
-        }
         return this.ctx2d;
     }
     toScreen(p: Complex): { x: number, y: number } {
@@ -105,6 +90,9 @@ class DiskRenderingContext {
         const SIZE = 30;
         const sp = this.toScreen(this.viewed(p));
         this.ctx().drawImage(img, sp.x - SIZE/2, sp.y - SIZE/2, SIZE, SIZE);
+        // TODO: Scale with metric.
+        // TODO: Rotate with turtle?
+        // TODO: Warp with projection?  Would require GL, textures, etc.
     }
 
     moveTo(p: Complex) {
@@ -118,7 +106,8 @@ class DiskRenderingContext {
         const b = this.viewed(p);
         this.lastPathPoint = b;
 
-        // looking for center c (and possibly r, radius of circle at c).
+        // looking for center c (and possibly r, radius of circle at c) where the circle
+        // goes through both a and b, and intersects the unit circule perpendicularly..
         // |c - a| = |c - b| = r
         // the right triangle formed by the centers and an intersection point
         // satisfies |c|^2 = 1 + r^2
@@ -144,12 +133,14 @@ class DiskRenderingContext {
         // c.a = (g*a.b - b.b*h)/det
         // c.b = (b.a*h - a.a*g)/det
         const det = (b.a*a.b) - (a.a*b.b);
-        if (a.magSq() > 0.9999 && b.magSq() > 0.9999) {
+        if (a.magSq() > IDEAL_BOUNDARY_MAGSQ && b.magSq() > IDEAL_BOUNDARY_MAGSQ) {
             // two ideal points, need to follow the outer edge counterclockwise
             this.drawIdealArc(a, b);
         } else if (Math.abs(det) < 0.00001) {
+            // curve is practically straight, so just draw a line.
             this.drawScreenLine(a, b);
         } else {
+            // find the center using the above math.
             const g = (1 + b.magSq())/2;
             const h = (1 + a.magSq())/2;
             const center = new Complex((g*a.b - b.b*h)/det, (b.a*h - a.a*g)/det);
@@ -185,8 +176,6 @@ class DiskRenderingContext {
         const counterClockwise = cross > 0;
         const radius = p1vec.mag()*this.scale;
 
-        const p1s: { x: number, y: number } = this.toScreen(p1);
-        const p2s: { x: number, y: number } = this.toScreen(p2);
         const centers = this.toScreen(center);
         // these are the sane normal angles where 0 is +x and +angle goes CCW
         const saneStartAngle = Math.atan2(p1vec.b, p1vec.a);

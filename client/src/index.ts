@@ -170,6 +170,7 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
         for (const [verts, style] of polys) {
             d.drawPoly(verts, { fillStyle: style, strokeStyle: "black" });
         }
+        d.drawDumbImage(Complex.zero, billy_img);
     };
     hc.addDrawFunc(drawer);
 }
@@ -180,6 +181,7 @@ makeButton("Hexagons-6", () => drawSimplePolygons(6, 6, 2));
 makeButton("Heptagons", () => drawSimplePolygons(7, 3, 4));
 makeButton("Triangles-7", () => drawSimplePolygons(3, 7, 8));
 makeButton("Triangles-8", () => drawSimplePolygons(3, 8, 6, { styles: ["black", "white"] }));
+makeButton("BioHazerd", () => drawSimplePolygons(10, 6, 2, { styles: ["black", "yellow"]}));
 
 
 const drawInfinityPie = () => {
