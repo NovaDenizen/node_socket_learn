@@ -3,6 +3,7 @@ import Complex from "./Complex";
 import { HypCanvas, Drawer, FrameTransition, Anchor, WorldMap } from "./HypCanvas";
 import { PolygonGeometry as PG } from "./PolygonGeometry";
 import DiskTurtle from "./DiskTurtle";
+import Fifo from "./Fifo";
 
 const x = new HypCanvas();
 
@@ -116,7 +117,7 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
             t.rotate(turn);
         }
     }
-    let fifo: [DiskTurtle, number][] = [];
+    let fifo: Fifo<[DiskTurtle, number]> = new Fifo();
     {
         // move turtle to position so that first poly is centered on origin.
         let t = new DiskTurtle();
