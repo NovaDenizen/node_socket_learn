@@ -4,6 +4,7 @@ import { HypCanvas, Drawer, FrameTransition, Anchor, WorldMap } from "./HypCanva
 import { PolygonGeometry as PG } from "./PolygonGeometry";
 import DiskTurtle from "./DiskTurtle";
 import Fifo from "./Fifo";
+import PointBag from "./PointBag";
 
 const x = new HypCanvas();
 
@@ -106,7 +107,7 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
     const r = geom.vertexRadius;
     const turn = geom.externalAngle;
     hc.reset();
-    let centerCache: Complex[] = [];
+    let centerCache: PointBag<null> = new PointBag();
     let polys: [Complex[], string][] = [];
     let verts: Complex[] = [];
     {
@@ -139,12 +140,8 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
             newCenter = t2.position();
             // yes, this is O(n^2) but I don't anticipate having more than a couple hundred polys here.
             // and it only happens when drawing a new figure.
-            for (const c of centerCache) {
-                if (HypCanvas.metric(newCenter, c) < geom.edgeRadius) {
-                    // we already have this one
-                    skip = true;
-                    break;
-                }
+            if (centerCache.any(newCenter, geom.edgeRadius)) {
+                skip = true;
             }
         }
         if (skip) {
@@ -152,7 +149,7 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
         }
 
         // store the new center
-        centerCache.push(newCenter);
+        centerCache.push([newCenter, null]);
         let newpoly: Complex[] = [];
         for (const v of verts) {
             newpoly.push(t.xform.xform(v));
