@@ -241,18 +241,18 @@ export default class HypCanvas {
             this.canvas = c;
             c.width = this.size;
             c.height = this.size;
-            c.onmousedown = m => this.mouse_input('mousedown', m);
-            c.onmouseup = m => this.mouse_input('mouseup', m);
-            c.onmousemove = m => this.mouse_input('mousemove', m);
-            c.ontouchcancel = m => this.touch_input('touchcancel', m);
-            c.ontouchend = m => this.touch_input('touchend', m);
-            c.ontouchmove = m => this.touch_input('touchmove', m);
-            c.ontouchstart = m => this.touch_input('touchstart', m);
+            c.onmousedown = m => this.mouseInput('mousedown', m);
+            c.onmouseup = m => this.mouseInput('mouseup', m);
+            c.onmousemove = m => this.mouseInput('mousemove', m);
+            c.ontouchcancel = m => this.touchInput('touchcancel', m);
+            c.ontouchend = m => this.touchInput('touchend', m);
+            c.ontouchmove = m => this.touchInput('touchmove', m);
+            c.ontouchstart = m => this.touchInput('touchstart', m);
         }
         this.postRedraw();
         return this.canvas;
     }
-    private mouse_input(handler: string, ev: MouseEvent): any {
+    private mouseInput(handler: string, ev: MouseEvent): any {
         if (handler === 'mousemove') {
             if (ev.buttons === 0) {
                 // no buttons are down, so don't do anything.
@@ -264,7 +264,7 @@ export default class HypCanvas {
             this.doScreenMove(screenStart, screenEnd);
         }
     }
-    private touch_input(handler: string, ev: TouchEvent) {
+    private touchInput(handler: string, ev: TouchEvent) {
         if (handler === 'touchstart') {
             if (this.touch) {
                 // we already have a touch, thank you very much.
