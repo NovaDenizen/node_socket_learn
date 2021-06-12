@@ -17,7 +17,7 @@ import Complex from "./Complex";
 //
 // Instead of an angle theta, I'm going to use a unit complex t = e^(i*theta).  That'll be fine.
 
-export default class Xform {
+export default class MobXform {
     // represents a Möbius transform over complex numbers of the form f(z) = (a*z + b)/(c*z + d)
     // with the condition ad - bc != 0.
 
@@ -39,7 +39,7 @@ export default class Xform {
     }
 
     // returns xform q such that q.compose(this) == this.compose(q) == identity
-    invert(): Xform {
+    invert(): MobXform {
         // this sends 0 to t*b
         //           -b to 0
         // So we want a xform that sends
@@ -55,10 +55,10 @@ export default class Xform {
         // new_t*new_b == -b
         // new_t*(-t*b) == -b
         // new_t = 1/t == t_
-        return new Xform(this.b.mul(this.t).neg(), this.t.complement());
+        return new MobXform(this.b.mul(this.t).neg(), this.t.complement());
     }
-    // x.inverseXform(p) is a.invert().xform(p) but faster
-    inverseXform(p: Complex): Complex {
+    // x.inverseMobXform(p) is a.invert().xform(p) but faster
+    inverseMobXform(p: Complex): Complex {
         // work backwards in two stages.
         // p == t*q and q == (r + b)(b_r + 1)
         // p == t*q
@@ -80,7 +80,7 @@ export default class Xform {
     //
     // let res = this.compose(other), then
     // res.xform(p) == this.xform(other.xform(p))
-    compose(other: Xform): Xform {
+    compose(other: MobXform): MobXform {
         // the composed xform sends 0 to p.
         // t*b = p
         const p = this.xform(other.xform(Complex.zero));
@@ -107,27 +107,27 @@ export default class Xform {
         const t = q.sub(p).div(Complex.one.sub(p.complement().mul(q))).normalize();
         // b = p/t = p*t_
         const b = p.mul(t.complement());
-        return new Xform(b, t);
+        return new MobXform(b, t);
     }
 
     // sends a point p to the origin, sends the origin to -p,
     // and keeps the ideal points in line with p immobile
-    static pointToOrigin(p: Complex): Xform {
-        return Xform.originToPoint(p.neg());
+    static pointToOrigin(p: Complex): MobXform {
+        return MobXform.originToPoint(p.neg());
     }
-    static originToPoint(p: Complex): Xform {
-        return new Xform(p, Complex.one);
+    static originToPoint(p: Complex): MobXform {
+        return new MobXform(p, Complex.one);
     }
-    // Creates a Xform that rotates counterclockwise about the origin by the given radians
-    static rotate(theta: number): Xform {
+    // Creates a MobXform that rotates counterclockwise about the origin by the given radians
+    static rotate(theta: number): MobXform {
         const r = Complex.unit(theta);
-        return new Xform(Complex.zero, r);
+        return new MobXform(Complex.zero, r);
     }
-    static readonly identity: Xform = new Xform(Complex.zero, Complex.one);
+    static readonly identity: MobXform = new MobXform(Complex.zero, Complex.one);
 }
 
 /*
-interface XformableTo<X> {
-    xformed(xf: Xform): X;
+interface MobXformableTo<X> {
+    xformed(xf: MobXform): X;
 }
 */

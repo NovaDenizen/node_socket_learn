@@ -1,4 +1,4 @@
-import Xform from "./Xform";
+import MobXform from "./MobXform";
 import Complex from "./Complex";
 // TODO: HypCanvas seems mostly irrelevant, it should be broken up
 import HypCanvas from "./HypCanvas";
@@ -7,13 +7,13 @@ import HypCanvas from "./HypCanvas";
 // a Poincare Disk view of the hyperbolic plane.
 export default class DiskTurtle {
     // sends the origin and the +x vector to the turtle location and forward vector.
-    xform: Xform;
-    constructor(arg?: Xform | DiskTurtle) {
+    xform: MobXform;
+    constructor(arg?: MobXform | DiskTurtle) {
         if (!arg) {
-            this.xform = Xform.identity;
+            this.xform = MobXform.identity;
         } else if (arg instanceof DiskTurtle) {
             this.xform = arg.xform;
-        } else if (arg instanceof Xform) {
+        } else if (arg instanceof MobXform) {
             this.xform = arg;
         } else {
             throw new Error("Invalid arg in DiskTurtle constructor");
@@ -21,10 +21,10 @@ export default class DiskTurtle {
         Object.seal(this);
     }
     home(): void {
-        this.xform = Xform.identity;
+        this.xform = MobXform.identity;
     }
     rotate(radians: number): void {
-        this.xform = this.xform.compose(Xform.rotate(radians));
+        this.xform = this.xform.compose(MobXform.rotate(radians));
     }
     forward(distance: number): void {
         // turtle-local end point of line, as if turtle was homed.
@@ -35,9 +35,9 @@ export default class DiskTurtle {
     // Assuming turtle is at home position (at origin, pointing right), move it to offset.
     // So offset is the movement relative to the Turtle's reference frame.
     move(offset: Complex): void {
-        const fwd = Xform.originToPoint(offset);
-        const newXform = this.xform.compose(fwd);
-        this.xform = newXform;
+        const fwd = MobXform.originToPoint(offset);
+        const newMobXform = this.xform.compose(fwd);
+        this.xform = newMobXform;
     }
     // where in the projection is the turtle?
     position(): Complex {

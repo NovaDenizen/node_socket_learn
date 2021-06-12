@@ -1,5 +1,5 @@
 import Complex from "./Complex";
-import Xform from "./Xform";
+import MobXform from "./MobXform";
 
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
@@ -37,8 +37,8 @@ class DiskRenderingContext {
     private yOffset: number;
     private scale: number;
     private ctx2d: CanvasRenderingContext2D;
-    private view: Xform;
-    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: Xform) {
+    private view: MobXform;
+    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: MobXform) {
         this.hypCanvas = hypCanvas;
         const width = htmlCanvas.width || 500;
         const height = htmlCanvas.height || 500;
@@ -205,7 +205,7 @@ export default class HypCanvas {
     private drawFuncs: ((d: Drawer) => void)[];
 
     private pendingRedraw: boolean;
-    private view: Xform;
+    private view: MobXform;
     private touch?: { id: number, x: number, y: number };
     logger: (msg: string) => void;
     get K() {
@@ -215,7 +215,7 @@ export default class HypCanvas {
         this.size = opts?.size || 500;
         this.canvas = undefined;
         this.pendingRedraw = false;
-        this.view = Xform.identity;
+        this.view = MobXform.identity;
         this.touch = undefined;
         this.logger = (msg) => { /* nothing */ };
         this.drawFuncs = [];
@@ -232,7 +232,7 @@ export default class HypCanvas {
         this.postRedraw();
     }
     reset() {
-        this.view = Xform.identity;
+        this.view = MobXform.identity;
         this.clear();
     }
     makeCanvas(): HTMLCanvasElement {
@@ -340,8 +340,8 @@ export default class HypCanvas {
         let startToO;
         let viewChange;
         try {
-            oToEnd = Xform.originToPoint(diskEnd);
-            startToO = Xform.pointToOrigin(diskStart);
+            oToEnd = MobXform.originToPoint(diskEnd);
+            startToO = MobXform.pointToOrigin(diskStart);
             viewChange = oToEnd.compose(startToO);
         } catch (err) {
             throw new Error('got singular transform building view change');
