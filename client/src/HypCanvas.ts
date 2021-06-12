@@ -1,5 +1,6 @@
 import Complex from "./Complex";
 import MobXform from "./MobXform";
+import ScreenXY from "./ScreenXY";
 
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
@@ -78,10 +79,10 @@ class DiskRenderingContext {
     ctx(): CanvasRenderingContext2D {
         return this.ctx2d;
     }
-    toScreen(p: Complex): { x: number, y: number } {
+    toScreen(p: Complex): ScreenXY {
         const x = p.a * this.scale + this.xOffset;
         const y = -p.b * this.scale + this.yOffset;
-        return { x, y };
+        return new ScreenXY(x, y);
     }
     drawImage(p: Complex, img: any): void {
         if (!img) {
@@ -206,7 +207,7 @@ export default class HypCanvas {
 
     private pendingRedraw: boolean;
     private view: MobXform;
-    private touch?: { id: number, x: number, y: number };
+    private touch?: { id: number, pt: ScreenXY };
     logger: (msg: string) => void;
     get K() {
         return -1;
@@ -272,7 +273,7 @@ export default class HypCanvas {
             }
             const t = ev.changedTouches.item(0);
             if (t) {
-                this.touch = { id: t.identifier, x: t.clientX, y: t.clientY };
+                this.touch = { id: t.identifier, pt: new ScreenXY(t.clientX, t.clientY) };
             } else {
                 throw new Error("I can't index arrays");
             }
@@ -309,10 +310,9 @@ export default class HypCanvas {
                 const t = ev.changedTouches.item(i);
                 if (t) {
                     if (t.identifier === this.touch.id) {
-                        this.doScreenMove({ x: this.touch.x, y: this.touch.y },
-                                          { x: t.clientX, y: t.clientY });
-                        this.touch.x = t.clientX;
-                        this.touch.y = t.clientY;
+                        const client = new ScreenXY(t.clientX, t.clientY);
+                        this.doScreenMove(this.touch.pt, client);
+                        this.touch.pt = client;
                     }
                 } else {
                     throw new Error("I can't index arrays");
@@ -322,7 +322,7 @@ export default class HypCanvas {
             // this.logger(`got unhandled event ${handler}`);
         }
     }
-    private doScreenMove(screenStart: { x: number, y: number}, screenEnd: { x: number, y: number}) {
+    private doScreenMove(screenStart: ScreenXY, screenEnd: ScreenXY) {
         let diskStart = this.xyToComplex(screenStart);
         let diskEnd = this.xyToComplex(screenEnd);
 
@@ -413,12 +413,12 @@ export default class HypCanvas {
         };
         this.pendingRedraw = false;
     }
-    private complexToXY(c: Complex): { x: number, y: number } {
+    private complexToXY(c: Complex): ScreenXY {
         const x = (1 + c.a)*this.size/2;
         const y = (1 - c.b)*this.size/2;
         return { x, y };
     }
-    private xyToComplex(p: { x: number, y: number }): Complex {
+    private xyToComplex(p: ScreenXY): Complex {
         const a = p.x * 2 / this.size - 1;
         const b = 1 - p.y * 2 / this.size;
         return new Complex(a,b);
