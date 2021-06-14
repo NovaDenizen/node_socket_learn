@@ -1,126 +1,116 @@
 
-import Complex from "./Complex";
+import ScreenXY from "./ScreenXY";
 
-// represents an affine transform over complex numbers with complex parameters x, y, and o:
+// represents an affine transform over screen coordinates.
 // This is an immutable object.
 //
-// f(a + bi) = ax + by + o
-// you can alwo view it like a matrix:
-// f(t) = [ x.a  y.a  o.a ] [ t.a ]
-//        [ x.b  y.b  o.b ] [ t.b ]
-//        [ 0    0    1   ] [ 1   ]
+// This transform is best viewed as a matrix, with 6 real parameters a through f.
+// f(t) = [ a  b  c ] [ t.a ]
+//        [ d  e  f ] [ t.b ]
+//        [ 0  0  1 ] [ 1   ]
 export default class AffXform {
-    readonly x: Complex;
-    readonly y: Complex;
-    readonly o: Complex;
-    constructor(x: Complex | undefined, y: Complex | undefined, o: Complex | undefined) {
-        if (x === undefined) {
-            x = Complex.one;
-        }
-        if (y === undefined) {
-            y = Complex.i;
-        }
-        if (o === undefined) {
-            o = Complex.zero;
-        }
-        this.x = x;
-        this.y = y;
-        this.o = o;
+    readonly a: number;
+    readonly b: number;
+    readonly c: number;
+    readonly d: number;
+    readonly e: number;
+    readonly f: number;
+    constructor(a: number, b: number, c: number, d: number, e: number, f: number) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+        this.d = d;
+        this.e = e;
+        this.f = f;
         Object.freeze(this);
     }
-    xform(q: Complex): Complex {
-        return this.x.scale(q.a).add(this.y.scale(q.b)).add(this.o);
+    xform(q: ScreenXY): ScreenXY {
+        return new ScreenXY(this.a * q.x + this.b * q.y + this.c,
+                            this.d * q.x + this.e * q.y + this.f);
     }
     // this.xform(other.xform(q)) === (this.compose(other)).xform(q)
     compose(other: AffXform): AffXform {
-        const o = this.xform(other.xform(Complex.zero));
-        const x = this.xform(other.xform(Complex.one)).sub(o);
-        const y = this.xform(other.xform(Complex.i)).sub(o);
-        return new AffXform(x, y, o);
+        const o = this.xform(other.xform(ScreenXY.zero));
+        const i = this.xform(other.xform(ScreenXY.iBasis)).sub(o);
+        const j = this.xform(other.xform(ScreenXY.jBasis)).sub(o);
+        return new AffXform(i.x, j.x, o.x, i.y, j.y, o.y);
     }
-    static translate(o: Complex): AffXform {
-        return new AffXform(Complex.one, Complex.i, o);
+    static translate(o: ScreenXY): AffXform {
+        return new AffXform(1, 0, o.x, 0, 1, o.y);
     }
     static rotate(radians: number): AffXform {
         const sin = Math.sin(radians);
         const cos = Math.cos(radians);
-        const x = new Complex(cos, sin);
-        const y = new Complex(-sin, cos);
-        return new AffXform(x, y, Complex.zero);
+        return new AffXform(cos, sin, 0, -sin, cos, 0);
     }
-    static flipX: AffXform = new AffXform(Complex.one.neg(), Complex.i, Complex.zero);
-    static flipY: AffXform = new AffXform(Complex.one, Complex.i.neg(), Complex.zero);
-    static scale(xscale: number, yscale: number): AffXform {
-        return new AffXform(new Complex(xscale, 0), new Complex(0, yscale), Complex.zero);
+    static flipX: AffXform = new AffXform(-1, 0, 0, 0, 1, 0);
+    static flipY: AffXform = new AffXform(1, 0, 0, 0, -1, 0);
+        static scale(xscale: number, yscale: number): AffXform {
+        return new AffXform(xscale, 0, 0, 0, yscale, 0);
     }
-    static identity: AffXform = new AffXform(Complex.one, Complex.i, Complex.zero);
+    static identity: AffXform = new AffXform(1, 0, 0, 0, 1, 0);
     invert(): AffXform {
-        // f(t) = [ x.a  y.a  o.a ] [ t.a ]
-        //        [ x.b  y.b  o.b ] [ t.b ]
-        //        [ 0    0    1   ] [ 1   ]
-        const det = this.x.a * this.y.b - this.x.b * this.y.a;
+        // f(t) = [ a  b  c ] [ t.a ]
+        //        [ d  e  f ] [ t.b ]
+        //        [ 0  0  1 ] [ 1   ]
+        const det = this.a * this.e - this.b * this.d;
         const det_inv = 1.0/det;
-        // [ x.a  y.a  o.a ] [ x'.a  y'.a  o'.a ]   [ 1 0 0 ]
-        // [ x.b  y.b  o.b ] [ x'.b  y'.b  o'.b ] = [ 0 1 0 ]
-        // [ 0    0    1   ] [ 0     0     1    ]   [ 0 0 1 ]
+        // [ a  b  c ] [ a' b' c' ]   [ 1 0 0 ]
+        // [ d  e  f ] [ d' e' f' ] = [ 0 1 0 ]
+        // [ 0  0  1 ] [ 0  0  1  ]   [ 0 0 1 ]
 
-        // x.a * x'.a + y.a*x'.b = 1
-        // x.b * x'.a + y.b*x'.b = 0
-        // [ x.a y.a ] [ x'.a ] = [ 1 ]
-        // [ x.b y.b ] [ x'.b ] = [ 0 ]
-        const new_x = new Complex(this.y.b * det_inv, this.x.b * det_inv);
+        // a * a' + b * d' = 1
+        // d * a' + e * d' = 0
+        const new_a = this.e * det_inv;
+        const new_d = -this.d * det_inv;
 
-        // x.a * y'.a + y.a * y'.b = 0
-        // x.b * y'.a + y.b * y'.b = 1
-        const new_y = new Complex(-this.y.a*det_inv, this.x.a*det_inv);
-        // x.a * o'.a + y.a * o'.b + o.a = 0
-        // x.b * o'.a + y.b * o'.b + o.b = 0
-        // [ x.a  y.a ] [ o'.a ] = [ -o.a ]
-        // [ x.b  y.b ] [ o'.b ] = [ -o.b ]
-        // o'.a = | -o.a y.a |
-        //        | -o.b y.b | / det
-        const new_o_a = (-this.o.a * this.y.b + this.y.a * this.o.b)* det_inv;
-        // o'.b = | x.a -o.a |
-        //        | x.b -o.b | / det
-        const new_o_b = (-this.x.a*this.o.b + this.x.b*this.o.a) * det_inv;
-        const new_o = new Complex(new_o_a, new_o_b);
-        return new AffXform(new_x, new_y, new_o);
+        // a * b' + b * e' = 0
+        // d * b' + e * e' = 1
+        const new_b = -this.b * det_inv;
+        const new_e = this.a * det_inv;
+
+        // a * c' + b * f' + c = 0
+        // d * c' + e * f' + f = 0
+        // a * c' + b * f' = -c
+        // d * c' + e * f' = -f
+        const new_c = (-this.c*this.e + this.f*this.b) * det_inv;
+        const new_f = (- this.a*this.f + this.d * this.c) * det_inv;
+        return new AffXform(new_a, new_b, new_c, new_d, new_e, new_f);
     }
-    // sends a to zero, b to 1, c to i.
+    // sends (0,0) to a, (1, 0) to b, and (0, 1) to c
     // a, b, c must be non-collinear
-    static z1i(a: Complex, b: Complex, c: Complex): AffXform {
+    static from_zij(a: ScreenXY, b: ScreenXY, c: ScreenXY): AffXform {
         // transform that sends a to 0 and b to 1 and c to i is the inverse
         // of the one that sends 0 to a, 1 to b, and i to c.
         // we're looking for R, where R^-1 = A and A satisfies:
-        // A(0) = a
-        // A(1) = b
-        // A(i) = c
-        // let B = translate(-a).
-        // (B.A)(0) = 0
-        // (B.A)(1) = b - a
-        // (B.A)(i) = c - a
-        // let C = B.A
-        // C.o = 0
-        // C.x = b - a
-        // C.y = c - a
-        // B^-1 = translate(a)
-        // B^-1 . C = A
-        // A = translate(a) . C
-        // R = A^-1 = C^-1 . translate(-a)
-        const tC: AffXform = new AffXform(b.sub(a), c.sub(a), Complex.zero);
-        const tC_inv: AffXform = tC.invert();
-        const tR: AffXform = tC_inv.compose(AffXform.translate(a.neg()));
-        return tR;
+
+        const new_c = a.x;
+        const new_f = a.y;
+        // [ a b c ][ 1 ] = [ b.x ]
+        // [ d e f ][ 0 ] = [ b.y ]
+        //          [ 1 ] = 
+        // a + c = b.x
+        // d + f = b.y
+        const new_a = b.x - new_c;
+        const new_d = b.y - new_f;
+
+        // [ a b c ][ 0 ] = [ c.x ]
+        // [ d e f ][ 1 ] = [ c.y ]
+        const new_b = c.x - new_c;
+        const new_e = c.y - new_f;
+        return new AffXform(new_a, new_b, new_c, new_d, new_e, new_f);
     }
-    static threePoint(a1: Complex, b1: Complex, c1: Complex, a2: Complex, b2: Complex, c2: Complex): AffXform
+    // sends a1, b1, and c1 to a2, b2, and c2 respectively
+    static threePoint(a1: ScreenXY, b1: ScreenXY, c1: ScreenXY, 
+                      a2: ScreenXY, b2: ScreenXY, c2: ScreenXY): AffXform
     {
-        // A (a1, b1, c1) = (0, 1, i)
-        // B (a2, b2, c2) = (0, 1, i)
-        // B^-1(0, 1, i) = (a2, b2, c2)
-        // (B^-1 . A) (a1, b1, c1) = (a2, b2, c2)
-        const tA = AffXform.z1i(a1, b1, c1);
-        const tB = AffXform.z1i(a2, b2, c2);
-        const tRes = tB.invert().compose(tA);
+        // A (0, i, j) = (a1, b1, c1) 
+        // B (0, i, j) = (a2, b2, c2)
+        // A^-1(a1, b1, c1) = (0, i, j)
+        // (B . A^-1)(a1, b1, c1) = (a2, b2, c2)
+        const tA = AffXform.from_zij(a1, b1, c1);
+        const tB = AffXform.from_zij(a2, b2, c2);
+        const tRes = tB.compose(tA.invert());
         return tRes;
     }
     // TODO: static shearX() {...} and static shearY() {...}?
