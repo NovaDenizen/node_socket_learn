@@ -78,7 +78,6 @@ export default class AffXform {
         return new AffXform(new_a, new_b, new_c, new_d, new_e, new_f);
     }
     // sends (0,0) to a, (1, 0) to b, and (0, 1) to c
-    // a, b, c must be non-collinear
     static from_zij(a: ScreenXY, b: ScreenXY, c: ScreenXY): AffXform {
         // transform that sends a to 0 and b to 1 and c to i is the inverse
         // of the one that sends 0 to a, 1 to b, and i to c.
@@ -112,6 +111,21 @@ export default class AffXform {
         const tB = AffXform.from_zij(a2, b2, c2);
         const tRes = tB.compose(tA.invert());
         return tRes;
+    }
+    det(): number {
+        return (this.a * this.e - this.d * this.b);
+    }
+    scale(): number {
+        return Math.sqrt(Math.abs(this.det()));
+    }
+    // works like this.inverse.xform(p), except it doesn't allocate anything.
+    inverseXform(p: ScreenXY): ScreenXY {
+        const det = this.a * this.e - this.b * this.d;
+        // a * r.x + b * r.y + c = p.x
+        // d * r.x + e * r.y + f = p.y
+        const resX = ((p.x - this.c) * this.e - (p.y - this.f)* this.b)/det;
+        const resY = (this.a * (p.y - this.f) - this.d*(p.x - this.c))/det;
+        return new ScreenXY(resX, resY);
     }
     // TODO: static shearX() {...} and static shearY() {...}?
 }

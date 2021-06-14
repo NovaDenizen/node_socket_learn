@@ -1,6 +1,7 @@
 import Complex from "./Complex";
 import MobXform from "./MobXform";
 import ScreenXY from "./ScreenXY";
+import AffXform from "./AffXform";
 
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
@@ -34,37 +35,35 @@ class DiskRenderingContext {
     private hypCanvas: HypCanvas;
     private firstPathPoint: Complex;
     private lastPathPoint: Complex;
-    private xOffset: number;
-    private yOffset: number;
-    private scale: number;
     private ctx2d: CanvasRenderingContext2D;
-    private view: MobXform;
-    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: MobXform) {
+    private view: MobXform = MobXform.identity;;
+    private diskToScreen: AffXform = AffXform.identity;
+    private canvas: HTMLCanvasElement;
+    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: MobXform, 
+                diskToScreen: AffXform) {
         this.hypCanvas = hypCanvas;
-        const width = htmlCanvas.width || 500;
-        const height = htmlCanvas.height || 500;
-        this.yOffset = height/2;
-        this.xOffset = width/2;
         this.view = view;
-        this.scale = Math.min(this.xOffset, this.yOffset);
         this.firstPathPoint = this.viewed(Complex.zero);
         this.lastPathPoint = this.firstPathPoint;
+        this.diskToScreen = diskToScreen;
         const ctx = htmlCanvas.getContext("2d");
         if (!ctx) {
             throw new Error("couldn't create CanvasRenderingContext2D");
         }
+        this.canvas = htmlCanvas;
         this.ctx2d = ctx;
     }
     clear() {
         const c = this.ctx();
         // clears the canvas to the background color
-        c.clearRect(0, 0, this.xOffset*2, this.yOffset*2);
+        c.clearRect(0, 0, this.canvas.width, this.canvas.height);
         // set the styles to solid black
         c.strokeStyle = "#000";
         c.fillStyle = "#888";
         // set the path to the border of the disk
         c.beginPath();
-        c.arc(this.xOffset, this.yOffset, this.scale, 0, Math.PI*2);
+
+        c.arc(this.canvas.width/2, this.canvas.height/2, this.diskToScreen.scale(), 0, Math.PI*2);
         c.closePath();
         // draw the outline
         c.stroke();
@@ -76,20 +75,18 @@ class DiskRenderingContext {
     private viewed(p: Complex): Complex {
         return this.view.xform(p);
     }
+    private screened(p: Complex): ScreenXY {
+        return this.diskToScreen.xform(ScreenXY.fromComplex(p));
+    }
     ctx(): CanvasRenderingContext2D {
         return this.ctx2d;
-    }
-    toScreen(p: Complex): ScreenXY {
-        const x = p.a * this.scale + this.xOffset;
-        const y = -p.b * this.scale + this.yOffset;
-        return new ScreenXY(x, y);
     }
     drawImage(p: Complex, img: any): void {
         if (!img) {
             return;
         }
         const SIZE = 30;
-        const sp = this.toScreen(this.viewed(p));
+        const sp = this.screened(this.viewed(p));
         this.ctx().drawImage(img, sp.x - SIZE/2, sp.y - SIZE/2, SIZE, SIZE);
         // TODO: Scale with metric.
         // TODO: Rotate with turtle?
@@ -98,7 +95,7 @@ class DiskRenderingContext {
 
     moveTo(p: Complex) {
         const xp = this.viewed(p);
-        const sp = this.toScreen(xp);
+        const sp = this.screened(xp);
         this.ctx().moveTo(sp.x, sp.y);
         this.lastPathPoint = xp;
     }
@@ -166,7 +163,7 @@ class DiskRenderingContext {
     }
 
     private drawScreenLine(a: Complex, b: Complex) {
-        const sb = this.toScreen(b);
+        const sb = this.screened(b);
         this.ctx().lineTo(sb.x, sb.y);
     }
     private drawScreenArc(center: Complex, p1: Complex, p2: Complex) {
@@ -175,9 +172,9 @@ class DiskRenderingContext {
 
         const cross = p1vec.a*p2vec.b - p1vec.b*p2vec.a;
         const counterClockwise = cross > 0;
-        const radius = p1vec.mag()*this.scale;
+        const radius = p1vec.mag()*this.diskToScreen.scale();
 
-        const centers = this.toScreen(center);
+        const centers = this.screened(center);
         // these are the sane normal angles where 0 is +x and +angle goes CCW
         const saneStartAngle = Math.atan2(p1vec.b, p1vec.a);
         const saneEndAngle = Math.atan2(p2vec.b, p2vec.a);
@@ -190,12 +187,13 @@ class DiskRenderingContext {
     private drawIdealArc(p1: Complex, p2: Complex) {
         const saneStartAngle = Math.atan2(p1.b, p1.a);
         const saneEndAngle = Math.atan2(p2.b, p2.a);
-        const centers = this.toScreen(Complex.zero);
-        const p1s = this.toScreen(p1);
-        const p2s = this.toScreen(p2);
+        const centers = this.screened(Complex.zero);
+        const p1s = this.screened(p1);
+        const p2s = this.screened(p2);
         const insaneStartAngle = -saneStartAngle;
         const insaneEndAngle = -saneEndAngle;
-        this.ctx().arc(centers.x, centers.y, this.scale, insaneStartAngle, insaneEndAngle, true);
+        this.ctx().arc(centers.x, centers.y, this.diskToScreen.scale(), 
+            insaneStartAngle, insaneEndAngle, true);
     }
 }
 
@@ -209,6 +207,7 @@ export default class HypCanvas {
     private view: MobXform;
     private touch?: { id: number, pt: ScreenXY };
     logger: (msg: string) => void;
+    private diskToScreen: AffXform = AffXform.identity;
     get K() {
         return -1;
     }
@@ -240,8 +239,6 @@ export default class HypCanvas {
         if (!this.canvas) {
             const c = document.createElement("canvas");
             this.canvas = c;
-            c.width = this.size;
-            c.height = this.size;
             c.onmousedown = m => this.mouseInput('mousedown', m);
             c.onmouseup = m => this.mouseInput('mouseup', m);
             c.onmousemove = m => this.mouseInput('mousemove', m);
@@ -252,6 +249,23 @@ export default class HypCanvas {
         }
         this.postRedraw();
         return this.canvas;
+    }
+    private makeDiskToScreen() {
+        if (!this.canvas) {
+            return;
+        }
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        let screenMid = new ScreenXY(width/2, height/2);
+        let size = 0;
+        if (width > height) {
+            size = height/2;
+        } else {
+            size = width/2;
+        }
+        let screenUp = new ScreenXY(screenMid.x, screenMid.y - size);
+        let screenRight = new ScreenXY(screenMid.x + size, screenMid.y);
+        this.diskToScreen = AffXform.from_zij(screenMid, screenRight, screenUp);
     }
     private mouseInput(handler: string, ev: MouseEvent): any {
         if (handler === 'mousemove') {
@@ -323,8 +337,8 @@ export default class HypCanvas {
         }
     }
     private doScreenMove(screenStart: ScreenXY, screenEnd: ScreenXY) {
-        let diskStart = this.xyToComplex(screenStart);
-        let diskEnd = this.xyToComplex(screenEnd);
+        let diskStart = this.diskToScreen.inverseXform(screenStart).toComplex();
+        let diskEnd = this.diskToScreen.inverseXform(screenEnd).toComplex();
 
         // console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
         const radiusLimit = 0.9;
@@ -367,11 +381,12 @@ export default class HypCanvas {
         //     the world map graph will be traversed, rendering all anchors within some radius.
         //     each anchor's drawing function will be invoked with a properly transformed drc & drawer.
         const canvas = this.canvas;
+        this.makeDiskToScreen();
         // console.log(canvas);
         if (!canvas) {
             return;
         }
-        const drc = new DiskRenderingContext(this, canvas, this.view);
+        const drc = new DiskRenderingContext(this, canvas, this.view, this.diskToScreen);
         drc.clear();
         const view = this.view;
         const hc = this;
