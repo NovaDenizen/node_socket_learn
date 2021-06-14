@@ -206,6 +206,10 @@ export default class HypCanvas {
     private pendingRedraw: boolean;
     private view: MobXform;
     private touch?: { id: number, pt: ScreenXY };
+    // 1:  No touches, waiting for a touch
+    // 2:  Touch started outside the disk, so let it pass through
+    // 3:  Touch started inside the disk, so handle it.
+    private touchState: number = 1;
     logger: (msg: string) => void;
     private diskToScreen: AffXform = AffXform.identity;
     get K() {
@@ -281,23 +285,23 @@ export default class HypCanvas {
     }
     private touchInput(handler: string, ev: TouchEvent) {
         if (handler === 'touchstart') {
-            if (this.touch) {
-                // we already have a touch, thank you very much.
-                return;
+            if (this.touchState == 1) {
+                const t = ev.changedTouches.item(0);
+                if (!t) {
+                    throw new Error("browser can't event");
+                }
+                const client = new ScreenXY(t.clientX, t.clientY);
+                const diskp = this.diskToScreen.inverseXform(client).toComplex();
+                if (diskp.magSq() < 1) {
+                    this.touch = { id: t.identifier, pt: client };
+                    this.touchState = 3;
+                    ev.preventDefault();
+                } else {
+                    this.touchState = 2;
+                }
             }
-            const t = ev.changedTouches.item(0);
-            if (t) {
-                this.touch = { id: t.identifier, pt: new ScreenXY(t.clientX, t.clientY) };
-            } else {
-                throw new Error("I can't index arrays");
-            }
-            ev.preventDefault();
         } else if ((handler === 'touchend') || (handler === 'touchcancel')) {
             ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
-            if (this.touch === undefined) {
-                // We don't have a touch, so we don't care.
-                return;
-            }
             // this.logger(`checking all ${ev.changedTouches.length} changed touches`);
 
             for (let i = 0; i < ev.changedTouches.length; i++) {
@@ -306,30 +310,34 @@ export default class HypCanvas {
                 if (!t) {
                     throw new Error("ev.changedTouches isn't working");
                 }
-                if (t.identifier === this.touch.id) {
+                if (this.touchState == 3 && this.touch && t.identifier === this.touch.id) {
                     this.touch = undefined;
                     // this.logger(`touch is now ${JSON.stringify(this.touch)}`);
                     ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
-                    return; // we're done here.
                 }
             }
-        } else if (handler === 'touchmove') {
-            ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
-            if (!this.touch) {
-                // we don't have a touch, so we don't care
-                ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
-                return;
+            if (ev.touches.length == 0) {
+                this.touchState = 1;
             }
-            for (let i = 0; i < ev.changedTouches.length; i++) {
-                const t = ev.changedTouches.item(i);
-                if (t) {
-                    if (t.identifier === this.touch.id) {
-                        const client = new ScreenXY(t.clientX, t.clientY);
-                        this.doScreenMove(this.touch.pt, client);
-                        this.touch.pt = client;
+        } else if (handler === 'touchmove') {
+            if (this.touchState == 3) {
+                ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
+                if (!this.touch) {
+                    // we don't have a touch, so we don't care
+                    ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
+                    return;
+                }
+                for (let i = 0; i < ev.changedTouches.length; i++) {
+                    const t = ev.changedTouches.item(i);
+                    if (t) {
+                        if (t.identifier === this.touch.id) {
+                            const client = new ScreenXY(t.clientX, t.clientY);
+                            this.doScreenMove(this.touch.pt, client);
+                            this.touch.pt = client;
+                        }
+                    } else {
+                        throw new Error("I can't index arrays");
                     }
-                } else {
-                    throw new Error("I can't index arrays");
                 }
             }
         } else {
