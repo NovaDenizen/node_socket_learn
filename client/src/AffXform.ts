@@ -15,10 +15,10 @@ export default class AffXform {
     readonly o: Complex;
     constructor(x: Complex | undefined, y: Complex | undefined, o: Complex | undefined) {
         if (x === undefined) {
-            x = Complex.zero;
+            x = Complex.one;
         }
         if (y === undefined) {
-            y = Complex.zero;
+            y = Complex.i;
         }
         if (o === undefined) {
             o = Complex.zero;
@@ -86,4 +86,42 @@ export default class AffXform {
         const new_o = new Complex(new_o_a, new_o_b);
         return new AffXform(new_x, new_y, new_o);
     }
+    // sends a to zero, b to 1, c to i.
+    // a, b, c must be non-collinear
+    static z1i(a: Complex, b: Complex, c: Complex): AffXform {
+        // transform that sends a to 0 and b to 1 and c to i is the inverse
+        // of the one that sends 0 to a, 1 to b, and i to c.
+        // we're looking for R, where R^-1 = A and A satisfies:
+        // A(0) = a
+        // A(1) = b
+        // A(i) = c
+        // let B = translate(-a).
+        // (B.A)(0) = 0
+        // (B.A)(1) = b - a
+        // (B.A)(i) = c - a
+        // let C = B.A
+        // C.o = 0
+        // C.x = b - a
+        // C.y = c - a
+        // B^-1 = translate(a)
+        // B^-1 . C = A
+        // A = translate(a) . C
+        // R = A^-1 = C^-1 . translate(-a)
+        const tC: AffXform = new AffXform(b.sub(a), c.sub(a), Complex.zero);
+        const tC_inv: AffXform = tC.invert();
+        const tR: AffXform = tC_inv.compose(AffXform.translate(a.neg()));
+        return tR;
+    }
+    static threePoint(a1: Complex, b1: Complex, c1: Complex, a2: Complex, b2: Complex, c2: Complex): AffXform
+    {
+        // A (a1, b1, c1) = (0, 1, i)
+        // B (a2, b2, c2) = (0, 1, i)
+        // B^-1(0, 1, i) = (a2, b2, c2)
+        // (B^-1 . A) (a1, b1, c1) = (a2, b2, c2)
+        const tA = AffXform.z1i(a1, b1, c1);
+        const tB = AffXform.z1i(a2, b2, c2);
+        const tRes = tB.invert().compose(tA);
+        return tRes;
+    }
+    // TODO: static shearX() {...} and static shearY() {...}?
 }

@@ -1,3 +1,4 @@
+import Complex from "./Complex";
 
 export default class ScreenXY {
     readonly x: number;
@@ -6,5 +7,11 @@ export default class ScreenXY {
         this.x = x || 0;
         this.y = y || 0;
         Object.freeze(this);
+    }
+    toComplex(): Complex {
+        return new Complex(this.x, this.y);
+    }
+    static fromComplex(c: Complex) {
+        return new ScreenXY(c.a, c.b);
     }
 }
