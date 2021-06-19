@@ -126,6 +126,29 @@ export default class MobXform {
         return new MobXform(Complex.zero, r);
     }
     static readonly identity: MobXform = new MobXform(Complex.zero, Complex.one);
+    // returns a transform that sends x to 0 and ideal y to 1.
+    static toZeroOne(x: Complex, y: Complex): MobXform {
+        // 0 = t(x + b)/(b_x + 1)
+        /// we know |t| = 1 |b|<1 and |x|<1, so |b_x + 1| > 0 
+        // so we just need to satisfy x + b = 0
+        const b = x.scale(-1);
+        // now need to find t.
+        // 1 = t(y + b)/(yb_ + 1)
+        // t = (yb_ + 1)/(y + b)
+        const t = y.mul(b.complement()).add(Complex.one).div(y.add(b));
+        return new MobXform(b, t);
+    }
+    // returns a transform that sends point x1 to x2, and ideal y1 to ideal y2.
+    static twoPoint(x1: Complex, y1: Complex, x2: Complex, y2: Complex): MobXform {
+        // t1[x1, y1] = [0, 1]
+        const t1 = MobXform.toZeroOne(x1, y1);
+        // t2[x2, y2] = [0, 1]
+        const t2 = MobXform.toZeroOne(x2, y2);
+        // [x2, y2] = t2^-1[0, 1]
+        // (t2^-1 . t1)[x1, y1] = t2^-1[0, 1] = [x2, y2]
+        const tRes = t2.invert().compose(t1);
+        return tRes;
+    }
 }
 
 /*
