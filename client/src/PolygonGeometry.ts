@@ -5,6 +5,12 @@
 // edgeRadius is distance from center to center of edge
 // internalAngle is internal angle of polygon
 // externalAngle is external angle of polygon
+// A 'slice' is a triangle made from two consecutive vertices and the center.
+// A slice triangle has two edges of length vertexRadius and one of edgeLength.
+// sliceAngle is the angle of a slice triangle at the center point.
+// the other two angles of the slice are internalAngle/2.
+// sides is the number of sides in the polyogn
+// order is the number of polygons that meet at each vertex.
 export class PolygonGeometry {
     readonly edgeLength: number;
     readonly internalAngle: number;
@@ -31,12 +37,12 @@ export class PolygonGeometry {
         const halfInternal = this.internalAngle/2;
         this.edgeLength = PolygonGeometry.triangleSideLength(this.sliceAngle, halfInternal, halfInternal);
         this.vertexRadius = PolygonGeometry.triangleSideLength(halfInternal, this.sliceAngle, halfInternal);
-        // this uses a half-slice triangle, with angles sliceAngle/2, 90, halfInternal
+        // this uses a half-slice triangle, with angles sliceAngle/2, right, halfInternal
         this.edgeRadius = PolygonGeometry.triangleSideLength(halfInternal, this.sliceAngle/2, Math.PI/2);
 
         Object.freeze(this);
     }
-    // Given triangle with angles alpha, beta, gamma, gives the side length of
+    // Given triangle with angles alpha, beta, gamma, gives the length of
     // the side opposite alpha.
     static triangleSideLength(alpha: number, beta: number, gamma: number): number {
         if (alpha + beta + gamma >= Math.PI ||
