@@ -202,7 +202,6 @@ class DiskRenderingContext {
 export default class HypCanvas {
     private opts?: any;
     private canvas?: HTMLCanvasElement;
-    private drawFuncs: ((d: Drawer) => void)[];
 
     private pendingRedraw: boolean;
     private view: MobXform;
@@ -213,6 +212,8 @@ export default class HypCanvas {
     private touchState: number = 1;
     logger: (msg: string) => void;
     private diskToScreen: AffXform = AffXform.identity;
+    private worldMap: WorldMap;
+    private anchor: string;
     get K() {
         return -1;
     }
@@ -223,7 +224,8 @@ export default class HypCanvas {
         this.view = MobXform.identity;
         this.touch = undefined;
         this.logger = (msg) => { /* nothing */ };
-        this.drawFuncs = [];
+        this.worldMap = new Map();
+        this.anchor = '';
         Object.seal(this);
     }
     postRedraw() {
@@ -233,7 +235,8 @@ export default class HypCanvas {
         }
     }
     clear() {
-        this.drawFuncs = [];
+        this.worldMap = new Map();
+        this.anchor = '';
         this.postRedraw();
     }
     reset() {
@@ -461,9 +464,14 @@ export default class HypCanvas {
             }
         };
         Object.freeze(d);
-        for (const f of this.drawFuncs) {
-            f(d);
-        };
+        if (this.anchor !== '') {
+            const anchor = this.worldMap.get(this.anchor);
+            if (anchor) {
+                (anchor.draw)(d);
+            } else {
+                throw new Error(`Anchor '${this.anchor}' doesn't exist.`);
+            }
+        }
         this.pendingRedraw = false;
     }
     /*
@@ -506,10 +514,9 @@ export default class HypCanvas {
         return 2*Math.atanh(z.mag());
     }
     setMap(wm: WorldMap, anchorId: string): void {
-        // set the WorldMap, focused on anchorId.
-    }
-    addDrawFunc(f: (d: Drawer) => void): void {
-        this.drawFuncs.push(f);
+        this.worldMap = wm;
+        this.anchor = anchorId;
+        this.view = MobXform.identity;
         this.postRedraw();
     }
 }

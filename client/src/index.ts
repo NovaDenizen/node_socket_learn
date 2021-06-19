@@ -57,11 +57,18 @@ p.appendChild(origin_img);
 const billy_img = makeCanvasImage("billy_cropped.png");
 p.appendChild(billy_img);
 
-const makeButton = (name: string, call: () => void) => {
+const makeButton = (name: string, drawer: (d: Drawer) => void) => {
     const b = document.createElement("input");
     b.value = name;
     b.type = "button";
-    b.onclick = call;
+    const wm = new Map([
+        [ "default", {
+            id: "default",
+            neighbors: [],
+            draw: drawer 
+        }]]);
+
+    b.onclick = () => { hc.setMap(wm, "default") };
     p.appendChild(b);
 }
 const randomStyle = () => {
@@ -72,7 +79,7 @@ const randomStyle = () => {
     return `rgb(${r},${g},${b})`;
 }
 
-const drawSpiderweb = () => {
+{
     const n = 20;
     const deltaR = 5 / n;
     hc.reset();
@@ -95,14 +102,15 @@ const drawSpiderweb = () => {
         }
         d.drawDumbImage(Complex.zero, billy_img);
     }
-    hc.addDrawFunc(drawer);
+    makeButton("spiderweb", drawer);
 };
-makeButton("spiderweb", drawSpiderweb);
 
 
 
+type DrawFunc = (d: Drawer) => void;
 
-const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: any) => {
+const drawSimplePolygons: (sides: number, order: number, depth: number, opts?: any) => DrawFunc 
+    = (sides: number, order: number, depth: number, opts?: any) => {
     const styles: string[] = (opts && opts.styles) || 
             ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
     const geom = new PG(sides, order);
@@ -175,19 +183,22 @@ const drawSimplePolygons = (sides: number, order: number, depth: number, opts?: 
         }
         d.drawDumbImage(Complex.zero, billy_img);
     };
-    hc.addDrawFunc(drawer);
+    return drawer;
 }
-makeButton("Squares", () => drawSimplePolygons(4, 5, 4));
-makeButton("Squares-6", () => drawSimplePolygons(4, 6, 4, { styles: ["black", "white"] }));
-makeButton("Pentagons", () => drawSimplePolygons(5, 4, 4, { styles: ["black", "white"] }));
-makeButton("Hexagons-6", () => drawSimplePolygons(6, 6, 2));
-makeButton("Heptagons", () => drawSimplePolygons(7, 3, 4));
-makeButton("Triangles-7", () => drawSimplePolygons(3, 7, 8));
-makeButton("Triangles-8", () => drawSimplePolygons(3, 8, 6, { styles: ["black", "white"] }));
-makeButton("BioHazerd", () => drawSimplePolygons(10, 6, 2, { styles: ["black", "yellow"]}));
+makeButton("Squares", drawSimplePolygons(4, 5, 4));
+makeButton("Squares-6", drawSimplePolygons(4, 6, 4, { styles: ["black", "white"] }));
+makeButton("Pentagons", drawSimplePolygons(5, 4, 4, { styles: ["black", "white"] }));
+makeButton("Hexagons-6", drawSimplePolygons(6, 6, 2));
+makeButton("Heptagons", drawSimplePolygons(7, 3, 4));
+makeButton("Triangles-7", drawSimplePolygons(3, 7, 8));
+makeButton("Triangles-8", drawSimplePolygons(3, 8, 6, { styles: ["black", "white"] }));
+makeButton("BioHazerd", drawSimplePolygons(10, 6, 2, { styles: ["black", "yellow"]}));
 
 
-const drawInfinityPie = () => {
+document.body.appendChild(p);
+p = document.createElement("p");
+
+{
     hc.reset();
     const slices = 30;
     const angle = Math.PI*2/slices;
@@ -207,15 +218,11 @@ const drawInfinityPie = () => {
             d.drawPoly(p, style);
         }
     }
-    hc.addDrawFunc(drawer);
+    makeButton("Infinity Pie", drawer);
 };
 
-document.body.appendChild(p);
-p = document.createElement("p");
 
-makeButton("Infinity Pie", drawInfinityPie);
-
-const drawIdealRays = () => {
+{
     hc.reset();
     const delta = 0.25;
     const n = 8;
@@ -244,12 +251,11 @@ const drawIdealRays = () => {
             d.drawPoly(p, style);
         }
     };
-    hc.addDrawFunc(drawer);
-
+    makeButton("Ideal Rays", drawer);
 };
-makeButton("Ideal Rays", drawIdealRays);
 
-const idealFan = (startAng: number, endAng: number, focus: Complex, n: number) => {
+const idealFan: (startAng: number, endAng: number, focus: Complex, n: number) => DrawFunc = 
+    (startAng: number, endAng: number, focus: Complex, n: number) => {
     let styles: string[] = ["red", "orange", "yellow", "green", "blue", "purple", "gray", "black", "pink"];
     let range = endAng - startAng;
     let deltaAng = range/n;
@@ -267,24 +273,28 @@ const idealFan = (startAng: number, endAng: number, focus: Complex, n: number) =
             d.drawPoly(p, style);
         }
     };
-    hc.addDrawFunc(drawer);
+    return drawer;
 };
-const dumbbell = () => {
+{
     hc.reset();
     const t = new DiskTurtle();
     t.forward(0.5);
     const rightFocus = t.position();
     const leftFocus = rightFocus.neg();
     const n = 12;
-    idealFan(-Math.PI/2, Math.PI/2, rightFocus, n);
-    idealFan(Math.PI/2, 3*Math.PI/2, leftFocus, n);
+    const fan1 = idealFan(-Math.PI/2, Math.PI/2, rightFocus, n);
+    const fan2 = idealFan(Math.PI/2, 3*Math.PI/2, leftFocus, n);
+    const drawer = (d: Drawer) => {
+        fan1(d);
+        fan2(d);
+        d.drawLine(leftFocus, rightFocus);
+    };
     // draw the line connecting the focii
-    hc.addDrawFunc((d: Drawer) => d.drawLine(leftFocus, rightFocus));
+    makeButton("Dumbbell", drawer);
 }
 
-makeButton("Dumbbell", dumbbell);
 
-const tripleDumbbell = () => {
+{
     hc.reset();
     const t = new DiskTurtle();
     t.forward(0.5);
@@ -293,18 +303,24 @@ const tripleDumbbell = () => {
     const f2 = f1.mul(rot120);
     const f3 = f2.mul(rot120);
     const n = 12;
-    idealFan(-Math.PI/3, Math.PI/3, f1, n);
-    idealFan(Math.PI/3, Math.PI, f2, n);
-    idealFan(-Math.PI, -Math.PI/3, f3, n);
-    hc.addDrawFunc((d: Drawer) => d.drawPoly([f1, f2, f3], { strokeStyle: "black" }));
+    const fan1 = idealFan(-Math.PI/3, Math.PI/3, f1, n);
+    const fan2 = idealFan(Math.PI/3, Math.PI, f2, n);
+    const fan3 = idealFan(-Math.PI, -Math.PI/3, f3, n);
+
+    const drawer = (d: Drawer) => {
+        fan1(d);
+        fan2(d);
+        fan3(d);
+        d.drawPoly([f1, f2, f3], { strokeStyle: "black" });
+    };
+    makeButton("3Dumbbell", drawer);
 }
-makeButton("3Dumbbell", tripleDumbbell);
 
 
 document.body.appendChild(p);
 
 //drawHeptagonEdgeTree();
-drawSpiderweb();
+//drawSpiderweb();
 
 const doInfiniteSqures = () =>
 {
