@@ -344,7 +344,17 @@ export default class HypCanvas {
             // this.logger(`got unhandled event ${handler}`);
         }
     }
-    private doScreenMove(screenStart: ScreenXY, screenEnd: ScreenXY) {
+    private doScreenMove(screenStart: ScreenXY, screenEnd: ScreenXY): void {
+        this.doScreenMove_throughOrigin(screenStart, screenEnd);
+    }
+    // performs a view move, in such a way that the line between start and end doesn't change.
+    // In other words, we need to find the two ideals on either end of the line connecting
+    // start and end, then find the transform that sends start to end and keeps the ideals
+    // stationary.
+    private doScreenMove_acrossIdeals(screenStart: ScreenXY, screenEnd: ScreenXY): void {
+    }
+    // performs a view move, as a composition of two translations, start->origin and origin->end
+    private doScreenMove_throughOrigin(screenStart: ScreenXY, screenEnd: ScreenXY): void {
         let diskStart = this.diskToScreen.inverseXform(screenStart).toComplex();
         let diskEnd = this.diskToScreen.inverseXform(screenEnd).toComplex();
 

@@ -58,7 +58,7 @@ export default class MobXform {
         return new MobXform(this.b.mul(this.t).neg(), this.t.complement());
     }
     // x.inverseMobXform(p) is a.invert().xform(p) but faster
-    inverseMobXform(p: Complex): Complex {
+    inverseXform(p: Complex): Complex {
         // work backwards in two stages.
         // p == t*q and q == (r + b)(b_r + 1)
         // p == t*q
@@ -78,18 +78,20 @@ export default class MobXform {
     }
     // composes this with other xform.
     //
-    // let res = this.compose(other), then
+    // let res = this.compose(other), then for all p
     // res.xform(p) == this.xform(other.xform(p))
     compose(other: MobXform): MobXform {
+        // in the following equations, t and b are the parameters of the new Xform
+        // which we are looking for.
         // the composed xform sends 0 to p.
         // t*b = p
+        // since |t| = 1, |b| = |p| and bb_ = pp_
         const p = this.xform(other.xform(Complex.zero));
         // the composed xform sends 1 to q
         // t*(1 + b)/(b_ + 1) = q
         const q = this.xform(other.xform(Complex.one))
         // p/q = b(b_ + 1)/(1 + b)
         //     = (bb_ + b)(1 + b)
-        // since |t| = 1, |b| = |p| and bb_ = pp_
         // p/q = (pp_ + b)/(1 + b)
         // |q| = 1, so 1/q = q_
         // pq_ = (pp_- 1 + 1 + b)/(1 + b)

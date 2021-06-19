@@ -38,7 +38,13 @@ export default class Complex {
         );
     }
     div(other: Complex): Complex {
-        return this.mul(other.invert());
+        // return this.mul(other.invert());
+        // (a + bi)/(c + di) = (a + bi)(c - di) / (c + di)(c - di)
+        //                   = ((ac + bd) + (bc - ad)i) / (c^2 + d^2)
+        const denInv = 1.0 / other.magSq();
+        return new Complex((this.a*other.a + this.b*other.b)*denInv, 
+                           (this.b*other.a - this.a*other.b)*denInv);
+
     }
     magSq(): number {
         return (this.a*this.a + this.b*this.b);
