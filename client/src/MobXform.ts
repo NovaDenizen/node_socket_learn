@@ -28,13 +28,15 @@ export default class MobXform {
 
     xform(z: Complex): Complex {
         // f(z) = e^(iϕ)(z + b)(b.compement()*z + 1)
-        const den = this.b.complement().mul(z).add(Complex.one);
+        const den = z.mulComp(this.b).add(Complex.one);
         const num = this.b.add(z);
         return num.div(den).mul(this.t);
     }
     private constructor(b: Complex, t: Complex) {
         this.b = b;
-        this.t = t;
+        // it's up to caller to ensure t is normal.
+        // constructor is private.  So only have to ensure this file does it right.
+        this.t = t; 
         Object.freeze(this);
     }
 
@@ -57,13 +59,13 @@ export default class MobXform {
         // new_t = 1/t == t_
         return new MobXform(this.b.mul(this.t).neg(), this.t.complement());
     }
-    // x.inverseMobXform(p) is a.invert().xform(p) but faster
+    // a.inverseMobXform(p) is a.invert().xform(p) but faster
     inverseXform(p: Complex): Complex {
         // work backwards in two stages.
         // p == t*q and q == (r + b)(b_r + 1)
         // p == t*q
         // q == p/t = p*t_
-        const q = p.mul(this.t.complement());
+        const q = p.mulComp(this.t);
         // q == (r + b)(b_*r + 1)
         // I think r == (q - b)/(1 - q*b_) will work.
         // q == ((q - b)/(1 - q*b_) + b)/(b_*(q - b)/(1 - q*b_) + 1)
@@ -73,7 +75,7 @@ export default class MobXform {
         //  == q(1 - bb_)/(1 - bb_)
         //  == q
         // r = (q - b)/(1 - q*b_) works.
-        const r = q.sub(this.b).div(Complex.one.sub(q.mul(this.b.complement())));
+        const r = q.sub(this.b).div(Complex.one.sub(q.mulComp(this.b)));
         return r;
     }
     // composes this with other xform.
@@ -106,9 +108,9 @@ export default class MobXform {
         // t = (1 - pq_)/(q_ - p_)
         // since qq_ = 1, multiply by q/q
         // t = (q - p)/(1 - p_q)
-        const t = q.sub(p).div(Complex.one.sub(p.complement().mul(q))).normalize();
+        const t = q.sub(p).div(Complex.one.sub(q.mulComp(p))).normalize();
         // b = p/t = p*t_
-        const b = p.mul(t.complement());
+        const b = p.mulComp(t);
         return new MobXform(b, t);
     }
 
@@ -135,7 +137,7 @@ export default class MobXform {
         // now need to find t.
         // 1 = t(y + b)/(yb_ + 1)
         // t = (yb_ + 1)/(y + b)
-        const t = y.mul(b.complement()).add(Complex.one).div(y.add(b));
+        const t = y.mulComp(b).add(Complex.one).div(y.add(b)).normalize();
         return new MobXform(b, t);
     }
     // returns a transform that sends point x1 to x2, and ideal y1 to ideal y2.

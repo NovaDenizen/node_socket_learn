@@ -37,6 +37,14 @@ export default class Complex {
             this.a * other.b + this.b * other.a
         );
     }
+    // a.mulComp(b) is the same as a.mul(b.complement()), but faster.
+    // this happens often enough that cluttering the api seems worth it.
+    mulComp(other: Complex): Complex {
+        return new Complex(
+            this.a * other.a + this.b * other.b,
+            this.b * other.a - this.a * other.b
+        );
+    }
     div(other: Complex): Complex {
         // return this.mul(other.invert());
         // (a + bi)/(c + di) = (a + bi)(c - di) / (c + di)(c - di)
@@ -64,6 +72,7 @@ export default class Complex {
     complement(): Complex {
         return new Complex(this.a, -this.b);
     }
+
     normalize(): Complex {
         return this.scale(1 / this.mag());
     }

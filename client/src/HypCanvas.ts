@@ -348,20 +348,35 @@ export default class HypCanvas {
             // this.logger(`got unhandled event ${handler}`);
         }
     }
-    private doScreenMove(screenStart: ScreenXY, screenEnd: ScreenXY): void {
-        this.doScreenMove_acrossIdeals(screenStart, screenEnd);
-    }
     // convert a screen point back to corresponding disk point.
     private screenToDisk(p: ScreenXY): Complex {
         return this.diskToScreen.invert().xform(p).toComplex();
+    }
+    // A mouse or touch has moved from start to end.  Update the view transform accordingly.
+    private doScreenMove(screenStart: ScreenXY, screenEnd: ScreenXY): void {
+        if (screenStart.x == screenEnd.x && screenStart.y == screenEnd.y) {
+            // point hasn't moved, so don't bother.
+            return;
+        }
+        let diskStart = this.screenToDisk(screenStart);
+        let diskEnd = this.screenToDisk(screenEnd);
+        const radiusLimit = 0.9;
+        if (diskStart.mag() > radiusLimit) {
+            // clamp it to abbreviated disk
+            diskStart = diskStart.normalize().scale(radiusLimit);
+        }
+        if (diskEnd.magSq() > radiusLimit) {
+            // clamp it to abbreviated disk
+            diskEnd = diskEnd.normalize().scale(radiusLimit);
+        }
+        this.doDiskMove_acrossIdeals(diskStart, diskEnd);
+        //this.doDiskMove_throughOrigin(diskStart, diskEnd);
     }
     // performs a view move, in such a way that the line between start and end doesn't change.
     // In other words, we need to find the two ideals on either end of the line connecting
     // start and end, then find the transform that sends start to end and keeps the ideals
     // stationary.
-    private doScreenMove_acrossIdeals(screenStart: ScreenXY, screenEnd: ScreenXY): void {
-        const diskStart: Complex = this.screenToDisk(screenStart);
-        const diskEnd: Complex = this.screenToDisk(screenEnd);
+    private doDiskMove_acrossIdeals(diskStart: Complex, diskEnd: Complex): void {
         const dt = new DiskTurtle();
         dt.move(diskStart);
         dt.aimAt(diskEnd);
@@ -372,20 +387,8 @@ export default class HypCanvas {
         this.postRedraw();
     }
     // performs a view move, as a composition of two translations, start->origin and origin->end
-    private doScreenMove_throughOrigin(screenStart: ScreenXY, screenEnd: ScreenXY): void {
-        let diskStart = this.diskToScreen.inverseXform(screenStart).toComplex();
-        let diskEnd = this.diskToScreen.inverseXform(screenEnd).toComplex();
-
+    private doScreenMove_throughOrigin(diskStart: Complex, diskEnd: Complex): void {
         // console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
-        const radiusLimit = 0.9;
-        if (diskStart.mag() > radiusLimit) {
-            // clamp it to disk
-            diskStart = diskStart.normalize().scale(radiusLimit);
-        }
-        if (diskEnd.magSq() > radiusLimit) {
-            // clamp it to disk
-            diskEnd = diskEnd.normalize().scale(radiusLimit);
-        }
         let oToEnd;
         let startToO;
         let viewChange;
