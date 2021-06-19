@@ -32,14 +32,12 @@ socket.on("xnewdata", (data: any[]) => {
     }
 });
 
-const hc = new HypCanvas({ size: 400 });
+const hc = new HypCanvas({ size: 800 });
 const logger = (s: string) => { socket.emit("clientlog", s); };
 hc.logger = logger;
 {
     const canvas = hc.makeCanvas();
     document.body.appendChild(canvas);
-    canvas.width = 800;
-    canvas.height = 800;
 }
 let p = document.createElement("p");
 

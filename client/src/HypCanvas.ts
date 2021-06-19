@@ -200,7 +200,7 @@ class DiskRenderingContext {
 
 
 export default class HypCanvas {
-    private size: number;
+    private opts?: any;
     private canvas?: HTMLCanvasElement;
     private drawFuncs: ((d: Drawer) => void)[];
 
@@ -217,7 +217,7 @@ export default class HypCanvas {
         return -1;
     }
     constructor(opts?: any) {
-        this.size = opts?.size || 500;
+        this.opts = opts;
         this.canvas = undefined;
         this.pendingRedraw = false;
         this.view = MobXform.identity;
@@ -244,6 +244,9 @@ export default class HypCanvas {
         if (!this.canvas) {
             const c = document.createElement("canvas");
             this.canvas = c;
+            const size = this.opts?.size || 500;
+            c.width = size;
+            c.height = size;
             c.onmousedown = m => this.mouseInput('mousedown', m);
             c.onmouseup = m => this.mouseInput('mouseup', m);
             c.onmousemove = m => this.mouseInput('mousemove', m);
