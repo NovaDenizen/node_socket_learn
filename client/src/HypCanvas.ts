@@ -2,6 +2,7 @@ import Complex from "./Complex";
 import MobXform from "./MobXform";
 import ScreenXY from "./ScreenXY";
 import AffXform from "./AffXform";
+import DiskTurtle from "./DiskTurtle";
 
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
@@ -291,7 +292,7 @@ export default class HypCanvas {
                     throw new Error("browser can't event");
                 }
                 const client = new ScreenXY(t.clientX, t.clientY);
-                const diskp = this.diskToScreen.inverseXform(client).toComplex();
+                const diskp = this.screenToDisk(client);
                 if (diskp.magSq() < 1) {
                     this.touch = { id: t.identifier, pt: client };
                     this.touchState = 3;
@@ -345,13 +346,27 @@ export default class HypCanvas {
         }
     }
     private doScreenMove(screenStart: ScreenXY, screenEnd: ScreenXY): void {
-        this.doScreenMove_throughOrigin(screenStart, screenEnd);
+        this.doScreenMove_acrossIdeals(screenStart, screenEnd);
+    }
+    // convert a screen point back to corresponding disk point.
+    private screenToDisk(p: ScreenXY): Complex {
+        return this.diskToScreen.invert().xform(p).toComplex();
     }
     // performs a view move, in such a way that the line between start and end doesn't change.
     // In other words, we need to find the two ideals on either end of the line connecting
     // start and end, then find the transform that sends start to end and keeps the ideals
     // stationary.
     private doScreenMove_acrossIdeals(screenStart: ScreenXY, screenEnd: ScreenXY): void {
+        const diskStart: Complex = this.screenToDisk(screenStart);
+        const diskEnd: Complex = this.screenToDisk(screenEnd);
+        const dt = new DiskTurtle();
+        dt.move(diskStart);
+        dt.aimAt(diskEnd);
+        const ideal = dt.idealPosition();
+        const viewChange = MobXform.twoPoint(diskStart, ideal, diskEnd, ideal);
+        const newView = viewChange.compose(this.view);
+        this.view = newView;
+        this.postRedraw();
     }
     // performs a view move, as a composition of two translations, start->origin and origin->end
     private doScreenMove_throughOrigin(screenStart: ScreenXY, screenEnd: ScreenXY): void {
