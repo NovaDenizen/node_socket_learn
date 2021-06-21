@@ -97,24 +97,28 @@ const randomStyle = () => {
 }
 
 {
-    const n = 20;
+    const n = 12;
     const deltaR = 5 / n;
     let deltaTheta = Math.PI * 2 / n;
+    let lines: [Complex, Complex, Complex][] = [];
+    for (let ri = 1; ri < n; ri++) {
+        for (let thetai = 0; thetai < n; thetai++) {
+            // radial line
+            let r = deltaR * ri;
+            let theta = deltaTheta * thetai;
+            // the 'base' point
+            let x = HypCanvas.polar(r, theta);
+            // the point inward
+            let y = HypCanvas.polar(r - deltaR, theta);
+            // the next circumferential point
+            let z = HypCanvas.polar(r, theta + deltaTheta);
+            lines.push([x, y, z]);
+        }
+    }
     const drawer = (d: Drawer) => {
-        for (let ri = 1; ri < n; ri++) {
-            for (let thetai = 0; thetai < n; thetai++) {
-                // radial line
-                let r = deltaR * ri;
-                let theta = deltaTheta * thetai;
-                // the 'base' point
-                let x = HypCanvas.polar(r, theta);
-                // the point inward
-                let y = HypCanvas.polar(r - deltaR, theta);
-                d.drawLine(x, y);
-                // the next circumferential point
-                let z = HypCanvas.polar(r, theta + deltaTheta);
-                d.drawLine(x, z);
-            }
+        for (const [x, y, z] of lines) {
+            d.drawLine(x, y);
+            d.drawLine(x, z);
         }
         d.drawDumbImage(Complex.zero, billy_img);
     }
