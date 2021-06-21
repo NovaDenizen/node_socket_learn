@@ -285,15 +285,18 @@ export default class HypCanvas {
     // plus we have to manage interference between mouse and touch stuff.
     // Or we could just assume touches and mouse stuff are mutually exclusive.
     private mouseInput(handler: string, ev: MouseEvent): any {
-        if (handler === 'mousemove') {
-            if (ev.buttons === 0) {
+        if (handler === 'mousedown' && !this.touch) {
+            this.touch = { id: 1, pt: new ScreenXY(ev.clientX, ev.clientY), view: this.view };
+        } else if (handler === 'mousemove' || handler === 'mouseup') {
+            if (ev.buttons === 0 || !this.touch) {
+                this.touch = undefined;
                 // no buttons are down, so don't do anything.
                 return;
             }
             const screenEnd = new ScreenXY(ev.clientX, ev.clientY);
-            const screenStart = new ScreenXY(screenEnd.x - ev.movementX, screenEnd.y - ev.movementY);
 
-            this.doScreenMove(screenStart, screenEnd);
+            this.view = this.touch.view;
+            this.doScreenMove(this.touch.pt, screenEnd);
         }
     }
     private touchInput(handler: string, ev: TouchEvent) {
