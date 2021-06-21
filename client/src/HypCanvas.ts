@@ -205,7 +205,7 @@ export default class HypCanvas {
 
     private pendingRedraw: boolean;
     private view: MobXform;
-    private touch?: { id: number, pt: ScreenXY };
+    private touch?: { id: number, pt: ScreenXY, view: MobXform };
     // 1:  No touches, waiting for a touch
     // 2:  Touch started outside the disk, so let it pass through
     // 3:  Touch started inside the disk, so handle it.
@@ -278,6 +278,12 @@ export default class HypCanvas {
         let screenRight = new ScreenXY(screenMid.x + size, screenMid.y);
         this.diskToScreen = AffXform.from_zij(screenMid, screenRight, screenUp);
     }
+    // TODO: Rejigger view adjustment so that the position at the start of the move and the
+    // current poisition determine the view adjustment. I.e., the path taken from start to current
+    // is irrelevant.
+    // This is annoying because we have to save and manage more state (the start position and view),
+    // plus we have to manage interference between mouse and touch stuff.
+    // Or we could just assume touches and mouse stuff are mutually exclusive.
     private mouseInput(handler: string, ev: MouseEvent): any {
         if (handler === 'mousemove') {
             if (ev.buttons === 0) {
@@ -300,7 +306,7 @@ export default class HypCanvas {
                 const client = new ScreenXY(t.clientX, t.clientY);
                 const diskp = this.screenToDisk(client);
                 if (diskp.magSq() < 1) {
-                    this.touch = { id: t.identifier, pt: client };
+                    this.touch = { id: t.identifier, pt: client, view: this.view };
                     this.touchState = 3;
                     ev.preventDefault();
                 } else {
@@ -308,9 +314,8 @@ export default class HypCanvas {
                 }
             }
         } else if ((handler === 'touchend') || (handler === 'touchcancel')) {
-            ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
-            // this.logger(`checking all ${ev.changedTouches.length} changed touches`);
 
+            // if an ended touch is our current touch, cancel it.
             for (let i = 0; i < ev.changedTouches.length; i++) {
                 const t = ev.changedTouches.item(i);
                 // this.logger(`checking changedTouch[${i}] = ${JSON.stringify(t)}`);
@@ -323,6 +328,7 @@ export default class HypCanvas {
                     ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
                 }
             }
+            // if all touches are gone, go back to state 1.
             if (ev.touches.length == 0) {
                 this.touchState = 1;
             }
@@ -331,7 +337,6 @@ export default class HypCanvas {
                 ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
                 if (!this.touch) {
                     // we don't have a touch, so we don't care
-                    ev.preventDefault(); // sometimes I think this throws an exception, so it's at the end.
                     return;
                 }
                 for (let i = 0; i < ev.changedTouches.length; i++) {
@@ -339,8 +344,9 @@ export default class HypCanvas {
                     if (t) {
                         if (t.identifier === this.touch.id) {
                             const client = new ScreenXY(t.clientX, t.clientY);
+                            this.view = this.touch.view;
                             this.doScreenMove(this.touch.pt, client);
-                            this.touch.pt = client;
+                            //this.touch.pt = client;
                         }
                     } else {
                         throw new Error("I can't index arrays");
