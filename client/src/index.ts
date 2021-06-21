@@ -57,20 +57,37 @@ p.appendChild(origin_img);
 const billy_img = makeCanvasImage("billy_cropped.png");
 p.appendChild(billy_img);
 
-const makeButton = (name: string, drawer: (d: Drawer) => void) => {
+const makeAnchor = (id: string, drawer: (d: Drawer) => void) => {
+    return {
+            id,
+            neighbors: [],
+            draw: drawer 
+    }
+}
+
+
+const makeButton = (name: string, anchor: Anchor) => {
     const b = document.createElement("input");
     b.value = name;
     b.type = "button";
-    const wm = new Map([
-        [ "default", {
-            id: "default",
-            neighbors: [],
-            draw: drawer 
-        }]]);
+    const wm = makeMap([anchor]);
 
-    b.onclick = () => { hc.setMap(wm, "default") };
+    b.onclick = () => { hc.setMap(wm, anchor.id) };
     p.appendChild(b);
 }
+
+const makeMap = (anchors: Anchor[]) => {
+    let wm = new Map();
+    for (const anc of anchors) {
+        wm.set(anc.id, anc);
+    }
+    return wm;
+}
+
+const makeAnchorAndButton = (name: string, drawer: (d: Drawer) => void) => {
+    makeButton(name, makeAnchor("default", drawer));
+}
+
 const randomStyle = () => {
     const brightRandom = () => Math.floor(Math.max(Math.random(), Math.random()) * 256);
     const r = brightRandom();
@@ -82,7 +99,6 @@ const randomStyle = () => {
 {
     const n = 20;
     const deltaR = 5 / n;
-    hc.reset();
     let deltaTheta = Math.PI * 2 / n;
     const drawer = (d: Drawer) => {
         for (let ri = 1; ri < n; ri++) {
@@ -102,7 +118,9 @@ const randomStyle = () => {
         }
         d.drawDumbImage(Complex.zero, billy_img);
     }
-    makeButton("spiderweb", drawer);
+    let anchor = makeAnchor("default", drawer);
+    makeButton("spiderweb", anchor);
+    hc.setMap(makeMap([anchor]), "default");
 };
 
 
@@ -117,7 +135,6 @@ const drawSimplePolygons: (sides: number, order: number, depth: number, opts?: a
     const e = geom.edgeLength;
     const r = geom.vertexRadius;
     const turn = geom.externalAngle;
-    hc.reset();
     let centerCache: PointBag<null> = new PointBag();
     let polys: [Complex[], string][] = [];
     let verts: Complex[] = [];
@@ -185,21 +202,20 @@ const drawSimplePolygons: (sides: number, order: number, depth: number, opts?: a
     };
     return drawer;
 }
-makeButton("Squares", drawSimplePolygons(4, 5, 4));
-makeButton("Squares-6", drawSimplePolygons(4, 6, 4, { styles: ["black", "white"] }));
-makeButton("Pentagons", drawSimplePolygons(5, 4, 4, { styles: ["black", "white"] }));
-makeButton("Hexagons-6", drawSimplePolygons(6, 6, 2));
-makeButton("Heptagons", drawSimplePolygons(7, 3, 4));
-makeButton("Triangles-7", drawSimplePolygons(3, 7, 8));
-makeButton("Triangles-8", drawSimplePolygons(3, 8, 6, { styles: ["black", "white"] }));
-makeButton("BioHazerd", drawSimplePolygons(10, 6, 2, { styles: ["black", "yellow"]}));
+makeAnchorAndButton("Squares", drawSimplePolygons(4, 5, 4));
+makeAnchorAndButton("Squares-6", drawSimplePolygons(4, 6, 4, { styles: ["black", "white"] }));
+makeAnchorAndButton("Pentagons", drawSimplePolygons(5, 4, 4, { styles: ["black", "white"] }));
+makeAnchorAndButton("Hexagons-6", drawSimplePolygons(6, 6, 2));
+makeAnchorAndButton("Heptagons", drawSimplePolygons(7, 3, 4));
+makeAnchorAndButton("Triangles-7", drawSimplePolygons(3, 7, 8));
+makeAnchorAndButton("Triangles-8", drawSimplePolygons(3, 8, 6, { styles: ["black", "white"] }));
+makeAnchorAndButton("BioHazerd", drawSimplePolygons(10, 6, 2, { styles: ["black", "yellow"]}));
 
 
 document.body.appendChild(p);
 p = document.createElement("p");
 
 {
-    hc.reset();
     const slices = 30;
     const angle = Math.PI*2/slices;
     const t = new DiskTurtle();
@@ -218,12 +234,11 @@ p = document.createElement("p");
             d.drawPoly(p, style);
         }
     }
-    makeButton("Infinity Pie", drawer);
+    makeAnchorAndButton("Infinity Pie", drawer);
 };
 
 
 {
-    hc.reset();
     const delta = 0.25;
     const n = 8;
     let leftIdeal = new Complex(-1, 0);
@@ -251,7 +266,7 @@ p = document.createElement("p");
             d.drawPoly(p, style);
         }
     };
-    makeButton("Ideal Rays", drawer);
+    makeAnchorAndButton("Ideal Rays", drawer);
 };
 
 const idealFan: (startAng: number, endAng: number, focus: Complex, n: number) => DrawFunc = 
@@ -276,7 +291,6 @@ const idealFan: (startAng: number, endAng: number, focus: Complex, n: number) =>
     return drawer;
 };
 {
-    hc.reset();
     const t = new DiskTurtle();
     t.forward(0.5);
     const rightFocus = t.position();
@@ -290,12 +304,11 @@ const idealFan: (startAng: number, endAng: number, focus: Complex, n: number) =>
         d.drawLine(leftFocus, rightFocus);
     };
     // draw the line connecting the focii
-    makeButton("Dumbbell", drawer);
+    makeAnchorAndButton("Dumbbell", drawer);
 }
 
 
 {
-    hc.reset();
     const t = new DiskTurtle();
     t.forward(0.5);
     const f1 = t.position();
@@ -313,7 +326,7 @@ const idealFan: (startAng: number, endAng: number, focus: Complex, n: number) =>
         fan3(d);
         d.drawPoly([f1, f2, f3], { strokeStyle: "black" });
     };
-    makeButton("3Dumbbell", drawer);
+    makeAnchorAndButton("3Dumbbell", drawer);
 }
 
 
@@ -324,7 +337,6 @@ document.body.appendChild(p);
 
 const doInfiniteSqures = () =>
 {
-    hc.reset();
     const geom = new PG(4, 6);
     const centerDistance = 2*geom.edgeRadius;
     const left = Math.PI/2;
