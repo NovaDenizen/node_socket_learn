@@ -5,6 +5,7 @@ import HypCanvas from "./HypCanvas";
 
 // this is a Turtle class that makes it less horrible to do geometric things with 
 // a Poincare Disk view of the hyperbolic plane.
+// It's a very thin wrapper around a MobXform.
 export default class DiskTurtle {
     // sends the origin and the +x vector to the turtle location and forward vector.
     xform: MobXform;
@@ -20,19 +21,21 @@ export default class DiskTurtle {
         }
         Object.seal(this);
     }
+    // send the turtle to the origin, pointing in +x direction.
     home(): void {
         this.xform = MobXform.identity;
     }
+    // rotate the turtle counterclockwise
     rotate(radians: number): void {
         this.xform = this.xform.compose(MobXform.rotate(radians));
     }
+    // moves turtle forward this distance in the metric.
     forward(distance: number): void {
-        // turtle-local end point of line, as if turtle was homed.
         const offset = HypCanvas.polar(distance, 0);
         this.move(offset);
     }
 
-    // Assuming turtle is at home position (at origin, pointing right), move it to offset.
+    // Assuming turtle is at home position (at origin, pointing +X), move it to this offset on the disk.
     // So offset is the movement relative to the Turtle's reference frame.
     move(offset: Complex): void {
         const fwd = MobXform.originToPoint(offset);
@@ -91,9 +94,13 @@ export default class DiskTurtle {
         const rot2 = Math.atan2(-q.b, q.a);
         return { rot1, forward, rot2 };
     }
-    // given another point, where does it seem to be from the turtle's perspective?
+    // given a point p on the projection, where does it appear to be relative to the turtle?
+    // in other words, 
+    // let q = this.relativePosition(p);
+    // this.move(q);
+    // now this.position() is p
     relativePosition(p: Complex): Complex {
-        return this.xform.invert().xform(p);
+        return this.xform.inverseXform(p);
     }
     // Aim the turtle at a given point on the disk.
     aimAt(p: Complex): void {
