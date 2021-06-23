@@ -26,7 +26,7 @@ export default class MobXform {
     readonly b: Complex;
     readonly t: Complex;
 
-    /// TIER 0.  Only external dependencies, mostly Complex and math.
+    /// TIER 0
     static readonly identity: MobXform = new MobXform(Complex.zero, Complex.one);
     private constructor(b: Complex, t: Complex) {
         this.b = b;
@@ -35,31 +35,13 @@ export default class MobXform {
         this.t = t; 
         Object.freeze(this);
     }
+
+
     xform(z: Complex): Complex {
         // f(z) = e^(iϕ)(z + b)(b.compement()*z + 1)
         const den = z.mulComp(this.b).add(Complex.one);
         const num = this.b.add(z);
         return num.div(den).mul(this.t);
-    }
-
-    // returns xform q such that q.compose(this) == this.compose(q) == identity
-    invert(): MobXform {
-        // this sends 0 to t*b
-        //           -b to 0
-        // So we want a xform that sends
-        //        1  t*b to 0
-        //        2  0 to -b
-        //
-        // from 1:
-        // t*b + new_b == 0
-        // new_b == -t*b
-        //
-        // from 2:
-        // new_t*(z + new_b)/(new_b_*z + 1) == -b
-        // new_t*new_b == -b
-        // new_t*(-t*b) == -b
-        // new_t = 1/t == t_
-        return new MobXform(this.b.mul(this.t).neg(), this.t.complement());
     }
     // a.inverseMobXform(p) is a.invert().xform(p) but faster
     inverseXform(p: Complex): Complex {
@@ -79,6 +61,28 @@ export default class MobXform {
         // r = (q - b)/(1 - q*b_) works.
         const r = q.sub(this.b).div(Complex.one.sub(q.mulComp(this.b)));
         return r;
+    }
+
+    /// TIER 1
+
+    // returns xform q such that q.compose(this) == this.compose(q) == identity
+    invert(): MobXform {
+        // this sends 0 to t*b
+        //           -b to 0
+        // So we want a xform that sends
+        //        1  t*b to 0
+        //        2  0 to -b
+        //
+        // from 1:
+        // t*b + new_b == 0
+        // new_b == -t*b
+        //
+        // from 2:
+        // new_t*(z + new_b)/(new_b_*z + 1) == -b
+        // new_t*new_b == -b
+        // new_t*(-t*b) == -b
+        // new_t = 1/t == t_
+        return new MobXform(this.b.mul(this.t).neg(), this.t.complement());
     }
     // given p with |p|<1 and ideal point q with |q| = 1, 
     // returns MobXform that sends 0 to p and 1 to q.
@@ -132,7 +136,7 @@ export default class MobXform {
         return new MobXform(Complex.zero, r);
     }
 
-    // TIER 1.  These functions depend on Tier 0.
+    // TIER 2.
 
     // composes this with other xform.
     //
@@ -160,7 +164,7 @@ export default class MobXform {
         return MobXform.originToPoint(p.neg());
     }
 
-    // Tier 2, depending on Tiers 1 and 0.
+    // TIER 3
 
     // returns a transform that sends point x1 to x2, and ideal y1 to ideal y2.
     static twoPoint(x1: Complex, y1: Complex, x2: Complex, y2: Complex): MobXform {
@@ -170,6 +174,8 @@ export default class MobXform {
         const t2 = MobXform.fromZeroOne(x2, y2);
         // (t2.t1) [x1, y1] = [x2, y2]
         const tRes = t2.compose(t1);
+        // This implementation requires 3 seems awfully expensive.  compose() uses
+        // four xform calls and a fromZeroOne.
         return tRes;
     }
 }
