@@ -83,15 +83,20 @@ export default class MobXform {
     // let res = this.compose(other), then for all p
     // res.xform(p) == this.xform(other.xform(p))
     compose(other: MobXform): MobXform {
+        const p = this.xform(other.xform(Complex.zero));
+        const q = this.xform(other.xform(Complex.one))
+        return MobXform.fromZeroOne(p, q);
+    }
+    // given p with |p|<1 and ideal point q with |q| = 1, 
+    // returns MobXform that sends 0 to p and 1 to q.
+    static fromZeroOne(p: Complex, q: Complex): MobXform {
         // in the following equations, t and b are the parameters of the new Xform
         // which we are looking for.
         // the composed xform sends 0 to p.
         // t*b = p
         // since |t| = 1, |b| = |p| and bb_ = pp_
-        const p = this.xform(other.xform(Complex.zero));
         // the composed xform sends 1 to q
         // t*(1 + b)/(b_ + 1) = q
-        const q = this.xform(other.xform(Complex.one))
         // p/q = b(b_ + 1)/(1 + b)
         //     = (bb_ + b)(1 + b)
         // p/q = (pp_ + b)/(1 + b)
@@ -144,12 +149,21 @@ export default class MobXform {
     static twoPoint(x1: Complex, y1: Complex, x2: Complex, y2: Complex): MobXform {
         // t1[x1, y1] = [0, 1]
         const t1 = MobXform.toZeroOne(x1, y1);
-        // t2[x2, y2] = [0, 1]
-        const t2 = MobXform.toZeroOne(x2, y2);
-        // [x2, y2] = t2^-1[0, 1]
-        // (t2^-1 . t1)[x1, y1] = t2^-1[0, 1] = [x2, y2]
-        const tRes = t2.invert().compose(t1);
+        // t2[0, 1] = [x2, y2]
+        const t2 = MobXform.fromZeroOne(x2, y2);
+        // (t2.t1) [x1, y1] = [x2, y2]
+        const tRes = t2.compose(t1);
         return tRes;
+    }
+    static composeMany(xfs: MobXform[]): MobXform {
+        let p = Complex.zero;
+        let q = Complex.one;
+        for (let i = xfs.length - 1; i >= 0; i--) {
+            const xf = xfs[i];
+            p = xf.xform(p);
+            q = xf.xform(q);
+        }
+        return MobXform.fromZeroOne(p, q);
     }
 }
 
