@@ -370,17 +370,9 @@ export default class HypCanvas {
             // point hasn't moved, so don't bother.
             return;
         }
-        let diskStart = this.screenToDisk(screenStart);
-        let diskEnd = this.screenToDisk(screenEnd);
         const radiusLimit = 0.9;
-        if (diskStart.mag() > radiusLimit) {
-            // clamp it to abbreviated disk
-            diskStart = diskStart.normalize().scale(radiusLimit);
-        }
-        if (diskEnd.magSq() > radiusLimit) {
-            // clamp it to abbreviated disk
-            diskEnd = diskEnd.normalize().scale(radiusLimit);
-        }
+        const diskStart = this.screenToDisk(screenStart).clampRadius(radiusLimit);
+        const diskEnd = this.screenToDisk(screenEnd).clampRadius(radiusLimit);;
         this.doDiskMove_acrossIdeals(diskStart, diskEnd);
         //this.doDiskMove_throughOrigin(diskStart, diskEnd);
     }

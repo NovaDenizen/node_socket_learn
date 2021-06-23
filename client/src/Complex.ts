@@ -76,6 +76,16 @@ export default class Complex {
     normalize(): Complex {
         return this.scale(1 / this.mag());
     }
+    clampRadius(maxRadius: number): Complex {
+        const mag = this.mag();
+        if (mag <= maxRadius) {
+            return this;
+        } else if (mag > 0) {
+            return this.scale(maxRadius / mag);
+        } else {
+            return Complex.zero;
+        }
+    }
     neg(): Complex {
         return new Complex(-this.a, -this.b);
     }
