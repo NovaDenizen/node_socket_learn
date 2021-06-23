@@ -26,18 +26,20 @@ export default class MobXform {
     readonly b: Complex;
     readonly t: Complex;
 
-    xform(z: Complex): Complex {
-        // f(z) = e^(iϕ)(z + b)(b.compement()*z + 1)
-        const den = z.mulComp(this.b).add(Complex.one);
-        const num = this.b.add(z);
-        return num.div(den).mul(this.t);
-    }
+    /// TIER 0.  Only external dependencies, mostly Complex and math.
+    static readonly identity: MobXform = new MobXform(Complex.zero, Complex.one);
     private constructor(b: Complex, t: Complex) {
         this.b = b;
         // it's up to caller to ensure t is normal.
         // constructor is private.  So only have to ensure this file does it right.
         this.t = t; 
         Object.freeze(this);
+    }
+    xform(z: Complex): Complex {
+        // f(z) = e^(iϕ)(z + b)(b.compement()*z + 1)
+        const den = z.mulComp(this.b).add(Complex.one);
+        const num = this.b.add(z);
+        return num.div(den).mul(this.t);
     }
 
     // returns xform q such that q.compose(this) == this.compose(q) == identity
@@ -78,15 +80,6 @@ export default class MobXform {
         const r = q.sub(this.b).div(Complex.one.sub(q.mulComp(this.b)));
         return r;
     }
-    // composes this with other xform.
-    //
-    // let res = this.compose(other), then for all p
-    // res.xform(p) == this.xform(other.xform(p))
-    compose(other: MobXform): MobXform {
-        const p = this.xform(other.xform(Complex.zero));
-        const q = this.xform(other.xform(Complex.one))
-        return MobXform.fromZeroOne(p, q);
-    }
     // given p with |p|<1 and ideal point q with |q| = 1, 
     // returns MobXform that sends 0 to p and 1 to q.
     static fromZeroOne(p: Complex, q: Complex): MobXform {
@@ -118,21 +111,6 @@ export default class MobXform {
         const b = p.mulComp(t);
         return new MobXform(b, t);
     }
-
-    // sends a point p to the origin, sends the origin to -p,
-    // and keeps the ideal points in line with p immobile
-    static pointToOrigin(p: Complex): MobXform {
-        return MobXform.originToPoint(p.neg());
-    }
-    static originToPoint(p: Complex): MobXform {
-        return new MobXform(p, Complex.one);
-    }
-    // Creates a MobXform that rotates counterclockwise about the origin by the given radians
-    static rotate(theta: number): MobXform {
-        const r = Complex.unit(theta);
-        return new MobXform(Complex.zero, r);
-    }
-    static readonly identity: MobXform = new MobXform(Complex.zero, Complex.one);
     // returns a transform that sends x to 0 and ideal y to 1.
     static toZeroOne(x: Complex, y: Complex): MobXform {
         // 0 = t(x + b)/(b_x + 1)
@@ -145,15 +123,25 @@ export default class MobXform {
         const t = y.mulComp(b).add(Complex.one).div(y.add(b)).normalize();
         return new MobXform(b, t);
     }
-    // returns a transform that sends point x1 to x2, and ideal y1 to ideal y2.
-    static twoPoint(x1: Complex, y1: Complex, x2: Complex, y2: Complex): MobXform {
-        // t1[x1, y1] = [0, 1]
-        const t1 = MobXform.toZeroOne(x1, y1);
-        // t2[0, 1] = [x2, y2]
-        const t2 = MobXform.fromZeroOne(x2, y2);
-        // (t2.t1) [x1, y1] = [x2, y2]
-        const tRes = t2.compose(t1);
-        return tRes;
+    static originToPoint(p: Complex): MobXform {
+        return new MobXform(p, Complex.one);
+    }
+    // Creates a MobXform that rotates counterclockwise about the origin by the given radians
+    static rotate(theta: number): MobXform {
+        const r = Complex.unit(theta);
+        return new MobXform(Complex.zero, r);
+    }
+
+    // TIER 1.  These functions depend on Tier 0.
+
+    // composes this with other xform.
+    //
+    // let res = this.compose(other), then for all p
+    // res.xform(p) == this.xform(other.xform(p))
+    compose(other: MobXform): MobXform {
+        const p = this.xform(other.xform(Complex.zero));
+        const q = this.xform(other.xform(Complex.one))
+        return MobXform.fromZeroOne(p, q);
     }
     static composeMany(xfs: MobXform[]): MobXform {
         let p = Complex.zero;
@@ -165,10 +153,24 @@ export default class MobXform {
         }
         return MobXform.fromZeroOne(p, q);
     }
+
+    // sends a point p to the origin, sends the origin to -p,
+    // and keeps the ideal points in line with p immobile
+    static pointToOrigin(p: Complex): MobXform {
+        return MobXform.originToPoint(p.neg());
+    }
+
+    // Tier 2, depending on Tiers 1 and 0.
+
+    // returns a transform that sends point x1 to x2, and ideal y1 to ideal y2.
+    static twoPoint(x1: Complex, y1: Complex, x2: Complex, y2: Complex): MobXform {
+        // t1[x1, y1] = [0, 1]
+        const t1 = MobXform.toZeroOne(x1, y1);
+        // t2[0, 1] = [x2, y2]
+        const t2 = MobXform.fromZeroOne(x2, y2);
+        // (t2.t1) [x1, y1] = [x2, y2]
+        const tRes = t2.compose(t1);
+        return tRes;
+    }
 }
 
-/*
-interface MobXformableTo<X> {
-    xformed(xf: MobXform): X;
-}
-*/
