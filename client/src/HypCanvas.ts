@@ -189,8 +189,6 @@ class DiskRenderingContext {
         const saneStartAngle = Math.atan2(p1.b, p1.a);
         const saneEndAngle = Math.atan2(p2.b, p2.a);
         const centers = this.screened(Complex.zero);
-        const p1s = this.screened(p1);
-        const p2s = this.screened(p2);
         const insaneStartAngle = -saneStartAngle;
         const insaneEndAngle = -saneEndAngle;
         this.ctx().arc(centers.x, centers.y, this.diskToScreen.scale(), 
