@@ -399,7 +399,7 @@ export default class HypCanvas {
         this.postRedraw();
     }
     // performs a view move, as a composition of two translations, start->origin and origin->end
-    private doScreenMove_throughOrigin(diskStart: Complex, diskEnd: Complex): void {
+    private doDiskMove_throughOrigin(diskStart: Complex, diskEnd: Complex): void {
         // console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
         let oToEnd;
         let startToO;
