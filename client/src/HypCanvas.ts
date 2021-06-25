@@ -35,7 +35,7 @@ export type WorldMap = Map<string, Anchor>;
 // everything with squared magnitude bigger than this is considered an ideal point
 const IDEAL_BOUNDARY_MAGSQ: number = 0.999999;
 const SEARCH_RADIUS: number = 0.2;
-const DRAW_RADIUS: number = 0.9;
+const DRAW_RADIUS: number = 0.95;
 class DiskRenderingContext {
     private hypCanvas: HypCanvas;
     private firstPathPoint: Complex;
@@ -473,23 +473,27 @@ export default class HypCanvas {
         drc.clear();
         const d: Drawer = new DrawerProxy(drc);
         Object.freeze(d);
+        this.logger("setting up anchorfifo and drawn");
+        console.log("setting up anchorfifo and drawn");
         const anchorFifo: Fifo<[DiskTurtle, string]> = new Fifo();
-        const drawn: PointBag<[DiskTurtle, string]> = new PointBag();
+        const drawn: PointBag<null> = new PointBag();
 
         if (this.anchor !== '') {
-            anchorFifo.push([new DiskTurtle(), this.anchor]);
+            anchorFifo.push([new DiskTurtle(this.view), this.anchor]);
         }
 
         while (anchorFifo.length > 0) {
             this.logger(`anchorFifo.length: ${anchorFifo.length}`);
+            console.log(`anchorFifo.length: ${anchorFifo.length}`);
             const [anchorTurtle, anchorName] = anchorFifo.shift()!;
             const anchor = this.worldMap.get(anchorName);
             if (anchor) {
                 const pos = anchorTurtle.position();
-                if (!drawn.any(pos, SEARCH_RADIUS)
-                    && pos.mag() < DRAW_RADIUS) {
+                if ((!drawn.any(pos, SEARCH_RADIUS))
+                    && (pos.mag() < DRAW_RADIUS)) {
                     drc.view = anchorTurtle.xform;
                     (anchor.draw)(d);
+                    drawn.push([pos, null]);
                     for (const n of anchor.neighbors) {
                         const t = new DiskTurtle(anchorTurtle);
                         const ft = n.transition;
