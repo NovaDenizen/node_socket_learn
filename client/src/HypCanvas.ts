@@ -481,23 +481,23 @@ export default class HypCanvas {
         }
 
         while (anchorFifo.length > 0) {
+            this.logger(`anchorFifo.length: ${anchorFifo.length}`);
             const [anchorTurtle, anchorName] = anchorFifo.shift()!;
             const anchor = this.worldMap.get(anchorName);
             if (anchor) {
                 const pos = anchorTurtle.position();
-                if (drawn.any(pos, SEARCH_RADIUS)
-                    || pos.mag() > DRAW_RADIUS) {
-                    continue;
-                }
-                drc.view = anchorTurtle.xform;
-                (anchor.draw)(d);
-                for (const n of anchor.neighbors) {
-                    const t = new DiskTurtle(anchorTurtle.xform);
-                    const ft = n.transition;
-                    t.rotate(ft.bearing);
-                    t.forward(ft.offset);
-                    t.rotate(ft.orientation);
-                    anchorFifo.push([t, n.id]);
+                if (!drawn.any(pos, SEARCH_RADIUS)
+                    && pos.mag() < DRAW_RADIUS) {
+                    drc.view = anchorTurtle.xform;
+                    (anchor.draw)(d);
+                    for (const n of anchor.neighbors) {
+                        const t = new DiskTurtle(anchorTurtle);
+                        const ft = n.transition;
+                        t.rotate(ft.bearing);
+                        t.forward(ft.offset);
+                        t.rotate(ft.orientation);
+                        anchorFifo.push([t, n.id]);
+                    }
                 }
             } else {
                 throw new Error(`Anchor '${this.anchor}' doesn't exist.`);
