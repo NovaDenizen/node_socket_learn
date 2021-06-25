@@ -197,6 +197,43 @@ class DiskRenderingContext {
 }
 
 
+class DrawerProxy {
+    private drc: DiskRenderingContext;
+    constructor(drc: DiskRenderingContext) {
+        this.drc = drc;
+    }
+    drawLine(a: Complex, b: Complex, strokeStyle?: string) {
+        this.drc.beginPath();
+        this.drc.moveTo(a);
+        this.drc.lineTo(b);
+        this.drc.ctx().strokeStyle = strokeStyle || "black";
+        this.drc.stroke();
+    }
+    drawPoly(ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }) {
+        if (ps.length == 0) {
+            return;
+        }
+        this.drc.beginPath();
+        this.drc.moveTo(ps[0]);
+        for (let i = 1; i < ps.length; i++) {
+            this.drc.lineTo(ps[i]);
+        }
+        this.drc.lineTo(ps[0]);
+        if (style && style.fillStyle) {
+            this.drc.ctx().fillStyle = style.fillStyle;
+            this.drc.fill();
+        }
+        if (style && style.strokeStyle) {
+            this.drc.ctx().strokeStyle = style.strokeStyle;
+            this.drc.stroke();
+        }
+    }
+    drawDumbImage(p: Complex, img: any) {
+        this.drc.drawImage(p,img);
+    }
+}
+
+
 export default class HypCanvas {
     private opts?: any;
     private canvas?: HTMLCanvasElement;
@@ -431,37 +468,7 @@ export default class HypCanvas {
         drc.clear();
         const view = this.view;
         const hc = this;
-        const d: Drawer = {
-            drawLine: (a: Complex, b: Complex, strokeStyle?: string) => {
-                drc.beginPath();
-                drc.moveTo(a);
-                drc.lineTo(b);
-                drc.ctx().strokeStyle = strokeStyle || "black";
-                drc.stroke();
-            },
-            drawPoly: (ps: Complex[], style?: { fillStyle?: string, strokeStyle?: string }) => {
-                if (ps.length == 0) {
-                    return;
-                }
-                drc.beginPath();
-                drc.moveTo(ps[0]);
-                for (let i = 1; i < ps.length; i++) {
-                    drc.lineTo(ps[i]);
-                }
-                drc.lineTo(ps[0]);
-                if (style && style.fillStyle) {
-                    drc.ctx().fillStyle = style.fillStyle;
-                    drc.fill();
-                }
-                if (style && style.strokeStyle) {
-                    drc.ctx().strokeStyle = style.strokeStyle;
-                    drc.stroke();
-                }
-            },
-            drawDumbImage: (p: Complex, img: any) => {
-                drc.drawImage(p,img);
-            }
-        };
+        const d: Drawer = new DrawerProxy(drc);
         Object.freeze(d);
         if (this.anchor !== '') {
             const anchor = this.worldMap.get(this.anchor);
