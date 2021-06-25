@@ -3,6 +3,8 @@ import MobXform from "./MobXform";
 import ScreenXY from "./ScreenXY";
 import AffXform from "./AffXform";
 import DiskTurtle from "./DiskTurtle";
+import Fifo from "./Fifo";
+import { PointBag } from "./PointBag";
 
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
@@ -32,16 +34,18 @@ export type WorldMap = Map<string, Anchor>;
 
 // everything with squared magnitude bigger than this is considered an ideal point
 const IDEAL_BOUNDARY_MAGSQ: number = 0.999999;
+const SEARCH_RADIUS: number = 0.2;
+const DRAW_RADIUS: number = 0.9;
 class DiskRenderingContext {
     private hypCanvas: HypCanvas;
     private firstPathPoint: Complex;
     private lastPathPoint: Complex;
     private ctx2d: CanvasRenderingContext2D;
-    private view: MobXform = MobXform.identity;;
+    view: MobXform = MobXform.identity;
     private diskToScreen: AffXform = AffXform.identity;
     private canvas: HTMLCanvasElement;
-    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: MobXform, 
-                diskToScreen: AffXform) {
+    constructor(hypCanvas: HypCanvas, htmlCanvas: HTMLCanvasElement, view: MobXform, diskToScreen: AffXform) 
+    {
         this.hypCanvas = hypCanvas;
         this.view = view;
         this.firstPathPoint = this.viewed(Complex.zero);
@@ -450,7 +454,8 @@ export default class HypCanvas {
         // console.log("new view", this.view);
         this.postRedraw();
     }
-    private draw() {
+    private draw() 
+    {
         // TODO: Change to WorldMap rendering schema.
         //     this.xform will be relative to the currnet main anchor.
         //     User scrolls around, this.xform gets updated.
@@ -466,14 +471,34 @@ export default class HypCanvas {
         }
         const drc = new DiskRenderingContext(this, canvas, this.view, this.diskToScreen);
         drc.clear();
-        const view = this.view;
-        const hc = this;
         const d: Drawer = new DrawerProxy(drc);
         Object.freeze(d);
+        const anchorFifo: Fifo<[DiskTurtle, string]> = new Fifo();
+        const drawn: PointBag<[DiskTurtle, string]> = new PointBag();
+
         if (this.anchor !== '') {
-            const anchor = this.worldMap.get(this.anchor);
+            anchorFifo.push([new DiskTurtle(), this.anchor]);
+        }
+
+        while (anchorFifo.length > 0) {
+            const [anchorTurtle, anchorName] = anchorFifo.shift()!;
+            const anchor = this.worldMap.get(anchorName);
             if (anchor) {
+                const pos = anchorTurtle.position();
+                if (drawn.any(pos, SEARCH_RADIUS)
+                    || pos.mag() > DRAW_RADIUS) {
+                    continue;
+                }
+                drc.view = anchorTurtle.xform;
                 (anchor.draw)(d);
+                for (const n of anchor.neighbors) {
+                    const t = new DiskTurtle(anchorTurtle.xform);
+                    const ft = n.transition;
+                    t.rotate(ft.bearing);
+                    t.forward(ft.offset);
+                    t.rotate(ft.orientation);
+                    anchorFifo.push([t, n.id]);
+                }
             } else {
                 throw new Error(`Anchor '${this.anchor}' doesn't exist.`);
             }
