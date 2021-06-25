@@ -339,29 +339,30 @@ document.body.appendChild(p);
 //drawHeptagonEdgeTree();
 //drawSpiderweb();
 
-const doInfiniteSqures = () =>
+const doInfiniteSquares = () =>
 {
     const geom = new PG(4, 6);
     const centerDistance = 2*geom.edgeRadius;
     const left = Math.PI/2;
     let squarePts: Complex[] = [];
-
-    const drawSquare = (d: Drawer, fillStyle: string) => {
-    /*
-        t.penDown();
+    {
+        const t = new DiskTurtle();
         t.rotate(geom.sliceAngle/2);
         t.forward(geom.vertexRadius);
         t.rotate(Math.PI - geom.internalAngle/2);
-        t.penDown();
+        squarePts.push(t.position());
         t.forward(geom.edgeLength);
+        squarePts.push(t.position());
         t.rotate(geom.externalAngle);
         t.forward(geom.edgeLength);
+        squarePts.push(t.position());
         t.rotate(geom.externalAngle);
         t.forward(geom.edgeLength);
-        t.rotate(geom.externalAngle);
-        t.forward(geom.edgeLength);
-        t.fillStyle = fillStyle;
-        t.fill();               */
+        squarePts.push(t.position());
+    }
+
+    const drawSquare = (d: Drawer, fillStyle: string) => {
+        d.drawPoly(squarePts, { fillStyle });
     };
     const map = new Map([
         [ "black",  { 
@@ -385,6 +386,8 @@ const doInfiniteSqures = () =>
     ]);
     hc.setMap(map, "white");
 }
+
+doInfiniteSquares();
 
 
 //console.log("index.ts is done");
