@@ -473,25 +473,6 @@ export default class HypCanvas {
         }
         this.pendingRedraw = false;
     }
-    /*
-    // MUSTDO: correctly translate between Complex disk domain and ScreenXY.
-    // These functions rely on the old assumption that the canvas is always square.
-    // but actually the way we do it the canvas _is_ always square.  It's just that the
-    // DiskRenderingContext does not rely on that assumption, but this code does.
-    // Anyway, both the diskRenderingContext and doScreenMove ought to use the exact same 
-    // AffineXform to do their respective businesses.
-    // TODO: We really ought  to ignroe touch events when they start outside the disk.
-    // Using Complex.a and Complex.b as screen coordinates seems bad.
-    private complexToXY(c: Complex): ScreenXY {
-        const x = (1 + c.a)*this.size/2;
-        const y = (1 - c.b)*this.size/2;
-        return new ScreenXY(x, y);
-    }
-    private xyToComplex(p: ScreenXY): Complex {
-        const a = p.x * 2 / this.size - 1;
-        const b = 1 - p.y * 2 / this.size;
-        return new Complex(a,b);
-    }*/
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
     // r is the distance from the origin in the poincare metric.
     static polar(r: number, radians: number): Complex {

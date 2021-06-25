@@ -4,7 +4,7 @@ import { HypCanvas, Drawer, FrameTransition, Anchor, WorldMap } from "./HypCanva
 import { PolygonGeometry as PG } from "./PolygonGeometry";
 import DiskTurtle from "./DiskTurtle";
 import Fifo from "./Fifo";
-import PointBag from "./PointBag";
+import { PointBag } from "./PointBag";
 
 const x = new HypCanvas();
 
