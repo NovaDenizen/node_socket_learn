@@ -484,18 +484,24 @@ export default class HypCanvas {
         }
 
         let fifoCount = 0;
+        // We always need to draw at least one anchor, no matter how close to the edge
+        // it is.  Hence this flag.
         let first = true;
+        let closest: [number, DiskTurtle, Anchor] | undefined = undefined; 
         while (anchorFifo.length > 0) {
             fifoCount++;
             //this.logger(`anchorFifo.length: ${anchorFifo.length}`);
             //console.log(`anchorFifo.length: ${anchorFifo.length}`);
             const [anchorTurtle, anchor] = anchorFifo.shift()!;
             const pos = anchorTurtle.position();
-            if (first || ((!drawn.any(pos, SEARCH_RADIUS))
-                && (pos.mag() < DRAW_RADIUS))) {
+            const dist = pos.mag();
+            if (first || ((!drawn.any(pos, SEARCH_RADIUS)) && (dist < DRAW_RADIUS))) {
                 drc.view = anchorTurtle.xform;
                 (anchor.draw)(d);
                 drawn.push([pos, [anchorTurtle, anchor]]);
+                if ((!closest) || (dist < closest[0])) {
+                    closest = [dist, anchorTurtle, anchor];
+                }
                 for (const n of anchor.neighbors) {
                     const t = new DiskTurtle(anchorTurtle);
                     const ft = n.transition;
@@ -509,6 +515,16 @@ export default class HypCanvas {
                 }
             } 
             first = false;
+        }
+        if (closest) {
+            const newAnchor = closest[2].id;
+            const newXform = closest[1].xform;
+            if (closest[2].id != this.anchor) {
+                this.logger(`old anchor ${this.anchor} at ${this.view}`);
+                this.logger(`new anchor ${newAnchor}} at ${newXform}`);
+            }
+            this.view = newXform;
+            this.anchor = newAnchor;
         }
         this.logger(`fifoCount = ${fifoCount}`);
         this.pendingRedraw = false;

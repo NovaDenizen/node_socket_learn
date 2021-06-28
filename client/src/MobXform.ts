@@ -178,5 +178,9 @@ export default class MobXform {
         // four xform calls and a fromZeroOne.
         return tRes;
     }
+    toString(): string {
+        const angle = Math.atan2(this.t.b, this.t.a);
+        return `rotate(${angle}).offset(${this.b})`;
+    }
 }
 
