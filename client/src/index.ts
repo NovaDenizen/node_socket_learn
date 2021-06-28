@@ -73,7 +73,20 @@ const makeButton = (name: string, anchor: Anchor) => {
     const wm = makeMap([anchor]);
 
     b.onclick = () => { hc.setMap(wm, anchor.id) };
+    b.id = name;
     p.appendChild(b);
+    return b;
+}
+
+const makeMapButton = (name: string, map: WorldMap, startAnchor: string) => {
+    const b = document.createElement("input");
+    b.value = name;
+    b.type = "button";
+    b.id = name;
+
+    b.onclick = () => { hc.setMap(map, startAnchor) };
+    p.appendChild(b);
+    return b;
 }
 
 const makeMap = (anchors: Anchor[]) => {
@@ -339,7 +352,6 @@ document.body.appendChild(p);
 //drawHeptagonEdgeTree();
 //drawSpiderweb();
 
-const doInfiniteSquares = () =>
 {
     const geom = new PG(4, 6);
     const centerDistance = 2*geom.edgeRadius;
@@ -363,6 +375,7 @@ const doInfiniteSquares = () =>
 
     const drawSquare = (d: Drawer, fillStyle: string) => {
         d.drawPoly(squarePts, { fillStyle });
+        d.drawDumbImage(Complex.zero, billy_img);
     };
     const map = new Map([
         [ "black",  { 
@@ -384,10 +397,11 @@ const doInfiniteSquares = () =>
             draw: (d: Drawer) => drawSquare(d, "white")
         }]
     ]);
+    makeMapButton("Infinite Billys", map, "white");
+    // makes Infinite Billys the active view.
     hc.setMap(map, "white");
 }
 
-doInfiniteSquares();
 
 
 //console.log("index.ts is done");

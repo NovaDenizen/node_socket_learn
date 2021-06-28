@@ -90,7 +90,7 @@ class DiskRenderingContext {
         if (!img) {
             return;
         }
-        const SIZE = 30;
+        const SIZE = 60;
         const sp = this.screened(this.viewed(p));
         this.ctx().drawImage(img, sp.x - SIZE/2, sp.y - SIZE/2, SIZE, SIZE);
         // TODO: Scale with metric.
