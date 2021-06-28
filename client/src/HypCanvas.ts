@@ -244,7 +244,7 @@ export default class HypCanvas {
 
     private pendingRedraw: boolean;
     private view: MobXform;
-    private touch?: { id: number, pt: ScreenXY, view: MobXform };
+    private touch?: { id: number, pt: ScreenXY };
     // 1:  No touches, waiting for a touch
     // 2:  Touch started outside the disk, so let it pass through
     // 3:  Touch started inside the disk, so handle it.
@@ -325,7 +325,7 @@ export default class HypCanvas {
     // Or we could just assume touches and mouse stuff are mutually exclusive.
     private mouseInput(handler: string, ev: MouseEvent): any {
         if (handler === 'mousedown' && !this.touch) {
-            this.touch = { id: 1, pt: new ScreenXY(ev.clientX, ev.clientY), view: this.view };
+            this.touch = { id: 1, pt: new ScreenXY(ev.clientX, ev.clientY) };
         } else if (handler === 'mousemove' || handler === 'mouseup') {
             if (ev.buttons === 0 || !this.touch) {
                 this.touch = undefined;
@@ -334,8 +334,8 @@ export default class HypCanvas {
             }
             const screenEnd = new ScreenXY(ev.clientX, ev.clientY);
 
-            this.view = this.touch.view;
             this.doScreenMove(this.touch.pt, screenEnd);
+            this.touch.pt = screenEnd;
         }
     }
     private touchInput(handler: string, ev: TouchEvent) {
@@ -348,7 +348,7 @@ export default class HypCanvas {
                 const client = new ScreenXY(t.clientX, t.clientY);
                 const diskp = this.screenToDisk(client);
                 if (diskp.magSq() < 1) {
-                    this.touch = { id: t.identifier, pt: client, view: this.view };
+                    this.touch = { id: t.identifier, pt: client };
                     this.touchState = 3;
                     ev.preventDefault();
                 } else {
@@ -386,9 +386,8 @@ export default class HypCanvas {
                     if (t) {
                         if (t.identifier === this.touch.id) {
                             const client = new ScreenXY(t.clientX, t.clientY);
-                            this.view = this.touch.view;
                             this.doScreenMove(this.touch.pt, client);
-                            //this.touch.pt = client;
+                            this.touch.pt = client;
                         }
                     } else {
                         throw new Error("I can't index arrays");
@@ -412,13 +411,14 @@ export default class HypCanvas {
         const radiusLimit = 0.9;
         const diskStart = this.screenToDisk(screenStart).clampRadius(radiusLimit);
         const diskEnd = this.screenToDisk(screenEnd).clampRadius(radiusLimit);;
-        this.doDiskMove_acrossIdeals(diskStart, diskEnd);
-        //this.doDiskMove_throughOrigin(diskStart, diskEnd);
+        //this.doDiskMove_acrossIdeals(diskStart, diskEnd);
+        this.doDiskMove_throughOrigin(diskStart, diskEnd);
     }
     // performs a view move, in such a way that the line between start and end doesn't change.
     // In other words, we need to find the two ideals on either end of the line connecting
     // start and end, then find the transform that sends start to end and keeps the ideals
     // stationary.
+    /*
     private doDiskMove_acrossIdeals(diskStart: Complex, diskEnd: Complex): void {
         const dt = new DiskTurtle();
         dt.move(diskStart);
@@ -428,7 +428,7 @@ export default class HypCanvas {
         const newView = viewChange.compose(this.view);
         this.view = newView;
         this.postRedraw();
-    }
+    }*/
     // performs a view move, as a composition of two translations, start->origin and origin->end
     private doDiskMove_throughOrigin(diskStart: Complex, diskEnd: Complex): void {
         // console.log("diskStart ", diskStart, " diskEnd ", diskEnd);
@@ -520,13 +520,13 @@ export default class HypCanvas {
             const newAnchor = closest[2].id;
             const newXform = closest[1].xform;
             if (closest[2].id != this.anchor) {
-                this.logger(`old anchor ${this.anchor} at ${this.view}`);
-                this.logger(`new anchor ${newAnchor}} at ${newXform}`);
+                // this.logger(`old anchor ${this.anchor} at ${this.view}`);
+                // this.logger(`new anchor ${newAnchor}} at ${newXform}`);
             }
             this.view = newXform;
             this.anchor = newAnchor;
         }
-        this.logger(`fifoCount = ${fifoCount}`);
+        // this.logger(`fifoCount = ${fifoCount}`);
         this.pendingRedraw = false;
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
