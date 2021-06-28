@@ -482,9 +482,11 @@ export default class HypCanvas {
             anchorFifo.push([new DiskTurtle(this.view), this.anchor]);
         }
 
+        let fifoCount = 0;
         while (anchorFifo.length > 0) {
-            this.logger(`anchorFifo.length: ${anchorFifo.length}`);
-            console.log(`anchorFifo.length: ${anchorFifo.length}`);
+            fifoCount++;
+            //this.logger(`anchorFifo.length: ${anchorFifo.length}`);
+            //console.log(`anchorFifo.length: ${anchorFifo.length}`);
             const [anchorTurtle, anchorName] = anchorFifo.shift()!;
             const anchor = this.worldMap.get(anchorName);
             if (anchor) {
@@ -507,6 +509,7 @@ export default class HypCanvas {
                 throw new Error(`Anchor '${this.anchor}' doesn't exist.`);
             }
         }
+        this.logger(`fifoCount = ${fifoCount}`);
         this.pendingRedraw = false;
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
