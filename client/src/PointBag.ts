@@ -7,6 +7,9 @@ export default class PointBag<T> {
     constructor() {
         Object.seal(this);
     }
+    get length(): number {
+        return this.centers.length;
+    }
     *search(searchCenter: Complex, searchRadius: number): Generator<[Complex, T]> {
         for(const [c,r] of this.centers) {
             if (metric(searchCenter, c) < searchRadius) {
@@ -28,6 +31,23 @@ export default class PointBag<T> {
     }
 
     static metric = metric;
+    // organize centers in heap order.
+    // centers[i] will be closer to origin than centers[2i+1] and centers[2i+2]
+    // centers[0] will be closest of all.
+    // runs in O(n)
+    heapify() {
+        for (let j = this.centers.length-1; j > 0; j--) {
+            const i = Math.floor((j-1)/2);
+            const ci = this.centers[i];
+            const cj = this.centers[j];
+            const di = ci[0].magSq();
+            const dj = cj[0].magSq();
+            if (dj < di) {
+                this.centers[i] = cj;
+                this.centers[j] = ci;
+            }
+        }
+    }
 }
 
 export { PointBag };

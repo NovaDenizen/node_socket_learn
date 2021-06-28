@@ -473,41 +473,42 @@ export default class HypCanvas {
         drc.clear();
         const d: Drawer = new DrawerProxy(drc);
         Object.freeze(d);
-        this.logger("setting up anchorfifo and drawn");
-        console.log("setting up anchorfifo and drawn");
-        const anchorFifo: Fifo<[DiskTurtle, string]> = new Fifo();
-        const drawn: PointBag<null> = new PointBag();
+        //this.logger("setting up anchorfifo and drawn");
+        //console.log("setting up anchorfifo and drawn");
+        const anchorFifo: Fifo<[DiskTurtle, Anchor]> = new Fifo();
+        const drawn: PointBag<[DiskTurtle, Anchor]> = new PointBag();
 
-        if (this.anchor !== '') {
-            anchorFifo.push([new DiskTurtle(this.view), this.anchor]);
+        const a = this.worldMap.get(this.anchor);
+        if (a) {
+            anchorFifo.push([new DiskTurtle(this.view), a]);
         }
 
         let fifoCount = 0;
+        let first = true;
         while (anchorFifo.length > 0) {
             fifoCount++;
             //this.logger(`anchorFifo.length: ${anchorFifo.length}`);
             //console.log(`anchorFifo.length: ${anchorFifo.length}`);
-            const [anchorTurtle, anchorName] = anchorFifo.shift()!;
-            const anchor = this.worldMap.get(anchorName);
-            if (anchor) {
-                const pos = anchorTurtle.position();
-                if ((!drawn.any(pos, SEARCH_RADIUS))
-                    && (pos.mag() < DRAW_RADIUS)) {
-                    drc.view = anchorTurtle.xform;
-                    (anchor.draw)(d);
-                    drawn.push([pos, null]);
-                    for (const n of anchor.neighbors) {
-                        const t = new DiskTurtle(anchorTurtle);
-                        const ft = n.transition;
-                        t.rotate(ft.bearing);
-                        t.forward(ft.offset);
-                        t.rotate(ft.orientation);
-                        anchorFifo.push([t, n.id]);
+            const [anchorTurtle, anchor] = anchorFifo.shift()!;
+            const pos = anchorTurtle.position();
+            if (first || ((!drawn.any(pos, SEARCH_RADIUS))
+                && (pos.mag() < DRAW_RADIUS))) {
+                drc.view = anchorTurtle.xform;
+                (anchor.draw)(d);
+                drawn.push([pos, [anchorTurtle, anchor]]);
+                for (const n of anchor.neighbors) {
+                    const t = new DiskTurtle(anchorTurtle);
+                    const ft = n.transition;
+                    t.rotate(ft.bearing);
+                    t.forward(ft.offset);
+                    t.rotate(ft.orientation);
+                    const a = this.worldMap.get(n.id);
+                    if (a) {
+                        anchorFifo.push([t, a]);
                     }
                 }
-            } else {
-                throw new Error(`Anchor '${this.anchor}' doesn't exist.`);
-            }
+            } 
+            first = false;
         }
         this.logger(`fifoCount = ${fifoCount}`);
         this.pendingRedraw = false;
