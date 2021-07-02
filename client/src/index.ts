@@ -402,6 +402,10 @@ document.body.appendChild(p);
     hc.setMap(map, "white");
 }
 
+function constFn<G, H>(g: G): (h: H) => G {
+    return ((h: H) => g);
+}
+
 
 
 //console.log("index.ts is done");

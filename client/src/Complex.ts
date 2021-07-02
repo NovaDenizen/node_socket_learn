@@ -52,7 +52,6 @@ export default class Complex {
         const denInv = 1.0 / other.magSq();
         return new Complex((this.a*other.a + this.b*other.b)*denInv, 
                            (this.b*other.a - this.a*other.b)*denInv);
-
     }
     magSq(): number {
         return (this.a*this.a + this.b*this.b);
