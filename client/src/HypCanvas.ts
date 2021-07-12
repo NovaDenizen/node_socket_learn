@@ -456,13 +456,6 @@ export default class HypCanvas {
     }
     private draw() 
     {
-        // TODO: Change to WorldMap rendering schema.
-        //     this.xform will be relative to the currnet main anchor.
-        //     User scrolls around, this.xform gets updated.
-        //     When another anchor gets closer to the center of the view, 
-        //     that anchor takes over as the main anchor
-        //     the world map graph will be traversed, rendering all anchors within some radius.
-        //     each anchor's drawing function will be invoked with a properly transformed drc & drawer.
         const canvas = this.canvas;
         this.makeDiskToScreen();
         // console.log(canvas);
@@ -476,7 +469,7 @@ export default class HypCanvas {
         //this.logger("setting up anchorfifo and drawn");
         //console.log("setting up anchorfifo and drawn");
         const anchorFifo: Fifo<[DiskTurtle, Anchor]> = new Fifo();
-        const drawn: PointBag<[DiskTurtle, Anchor]> = new PointBag();
+        const drawn: PointBag<undefined> = new PointBag();
 
         const a = this.worldMap.get(this.anchor);
         if (a) {
@@ -495,10 +488,10 @@ export default class HypCanvas {
             const [anchorTurtle, anchor] = anchorFifo.shift()!;
             const pos = anchorTurtle.position();
             const dist = pos.mag();
-            if (first || ((!drawn.any(pos, SEARCH_RADIUS)) && (dist < DRAW_RADIUS))) {
+            if (first || ((dist < DRAW_RADIUS) && (!drawn.any(pos, SEARCH_RADIUS)) )) {
                 drc.view = anchorTurtle.xform;
                 (anchor.draw)(d);
-                drawn.push([pos, [anchorTurtle, anchor]]);
+                drawn.push([pos, undefined]);
                 if ((!closest) || (dist < closest[0])) {
                     closest = [dist, anchorTurtle, anchor];
                 }
