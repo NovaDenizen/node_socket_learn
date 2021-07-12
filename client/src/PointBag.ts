@@ -1,23 +1,33 @@
 import Complex from "./Complex";
 import HypCanvas from "./HypCanvas";
 
+export class Entry<T> {
+    readonly p: Complex;
+    readonly payload: T;
+    constructor(p: Complex, payload: T) {
+        this.p = p;
+        this.payload = payload;
+        Object.freeze(this);
+    }
+}
+
 // TODO: Better algorithms are possible
 export default class PointBag<T> {
-    private centers: [Complex, T][] = [];
+    private centers: Entry<T>[] = [];
     constructor() {
         Object.seal(this);
     }
     get length(): number {
         return this.centers.length;
     }
-    *search(searchCenter: Complex, searchRadius: number): Generator<[Complex, T]> {
-        for(const [c,r] of this.centers) {
-            if (metric(searchCenter, c) < searchRadius) {
-                yield [c, r];
+    *search(searchCenter: Complex, searchRadius: number): Generator<Entry<T>> {
+        for(const entry of this.centers) {
+            if (metric(searchCenter, entry.p) < searchRadius) {
+                yield entry;
             }
         }
     }
-    any(c: Complex, radius: number): [Complex, T] | undefined {
+    any(c: Complex, radius: number): Entry<T> | undefined {
         const it = this.search(c, radius);
         const sr = it.next();
         if (sr.done) {
@@ -26,8 +36,8 @@ export default class PointBag<T> {
             return sr.value;
         }
     }
-    push(...args: [Complex, T][]): void {
-        this.centers.push(...args);
+    push(p: Complex, payload: T): void {
+        this.centers.push(new Entry(p, payload));
     }
 
     static metric = metric;
@@ -40,8 +50,8 @@ export default class PointBag<T> {
             const i = Math.floor((j-1)/2);
             const ci = this.centers[i];
             const cj = this.centers[j];
-            const di = ci[0].magSq();
-            const dj = cj[0].magSq();
+            const di = ci.p.magSq();
+            const dj = cj.p.magSq();
             if (dj < di) {
                 this.centers[i] = cj;
                 this.centers[j] = ci;

@@ -194,7 +194,7 @@ const drawSimplePolygons: (sides: number, order: number, depth: number, opts?: a
         }
 
         // store the new center
-        centerCache.push([newCenter, null]);
+        centerCache.push(newCenter, null);
         let newpoly: Complex[] = [];
         for (const v of verts) {
             newpoly.push(t.xform.xform(v));

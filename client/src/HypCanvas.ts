@@ -496,7 +496,7 @@ export default class HypCanvas {
             if (first || ((dist < DRAW_RADIUS) && (!drawn.any(pos, SEARCH_RADIUS)) )) {
                 drc.view = anchorTurtle.xform;
                 (anchor.draw)(d);
-                drawn.push([pos, undefined]);
+                drawn.push(pos, undefined);
                 if ((!closest) || (dist < closest[0])) {
                     closest = [dist, anchorTurtle, anchor];
                 }
