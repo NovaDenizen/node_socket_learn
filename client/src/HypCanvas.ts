@@ -253,6 +253,7 @@ export default class HypCanvas {
     private diskToScreen: AffXform = AffXform.identity;
     private worldMap: WorldMap;
     private anchor: string;
+    private lastDrawTime: number = 0;
     get K() {
         return -1;
     }
@@ -454,8 +455,8 @@ export default class HypCanvas {
         // console.log("new view", this.view);
         this.postRedraw();
     }
-    private draw() 
-    {
+    private draw() {
+        const start = new Date().getTime();
         const canvas = this.canvas;
         this.makeDiskToScreen();
         // console.log(canvas);
@@ -514,12 +515,16 @@ export default class HypCanvas {
             const newXform = closest[1].xform;
             if (closest[2].id != this.anchor) {
                 // this.logger(`old anchor ${this.anchor} at ${this.view}`);
-                // this.logger(`new anchor ${newAnchor}} at ${newXform}`);
+                // this.logger(`new anchor ${newAnchor} at ${newXform}`);
             }
             this.view = newXform;
             this.anchor = newAnchor;
         }
-        // this.logger(`fifoCount = ${fifoCount}`);
+        const end = new Date().getTime();
+        const elapsed = end - start;
+        const drawPeriod = start - this.lastDrawTime;
+        this.lastDrawTime = start;
+        this.logger(`fifoCount=${fifoCount} drawn.length=${drawn.length} elapsed=${elapsed}ms period=${drawPeriod}`);
         this.pendingRedraw = false;
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
