@@ -238,6 +238,7 @@ class DrawerProxy {
 }
 
 
+const DRAW_WEIGHT_EXP: number = 0.95;
 export default class HypCanvas {
     private opts?: any;
     private canvas?: HTMLCanvasElement;
@@ -254,6 +255,9 @@ export default class HypCanvas {
     private worldMap: WorldMap;
     private anchor: string;
     private lastDrawTime: number = 0;
+    private drawTimesWeighted: number = 0;
+    private drawTimesWeight: number = 0;
+
     get K() {
         return -1;
     }
@@ -523,8 +527,12 @@ export default class HypCanvas {
         const end = new Date().getTime();
         const elapsed = end - start;
         const drawPeriod = start - this.lastDrawTime;
+        this.drawTimesWeighted = DRAW_WEIGHT_EXP * this.drawTimesWeighted + elapsed;
+        this.drawTimesWeight = DRAW_WEIGHT_EXP * this.drawTimesWeight + 1;
+
         this.lastDrawTime = start;
-        this.logger(`fifoCount=${fifoCount} drawn.length=${drawn.length} elapsed=${elapsed}ms period=${drawPeriod}`);
+        const weightedAvg = this.drawTimesWeighted / this.drawTimesWeight;
+        this.logger(`fifoCount=${fifoCount} drawn.length=${drawn.length} elapsed=${elapsed}ms period=${drawPeriod} weighted=${weightedAvg}`);
         this.pendingRedraw = false;
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.

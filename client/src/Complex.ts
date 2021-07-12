@@ -21,12 +21,8 @@ export default class Complex {
         }
         return `[${this.a}${bsign}${b}i]`;
     }
-    add(other: Complex | number): Complex {
-        if (typeof(other) === "number") {
-            return new Complex(this.a + other, this.b);
-        } else {
-            return new Complex(this.a + other.a, this.b + other.b);
-        }
+    add(other: Complex): Complex {
+        return new Complex(this.a + other.a, this.b + other.b);
     }
     sub(other: Complex): Complex {
         return new Complex(this.a - other.a, this.b - other.b);

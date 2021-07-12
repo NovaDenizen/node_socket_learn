@@ -27,7 +27,10 @@ export default class MobXform {
     readonly t: Complex;
 
     /// TIER 0
-    static readonly identity: MobXform = new MobXform(Complex.zero, Complex.one);
+    toString(): string {
+        const angle = Math.atan2(this.t.b, this.t.a);
+        return `rotate(${angle}).offset(${this.b})`;
+    }
     private constructor(b: Complex, t: Complex) {
         this.b = b;
         // it's up to caller to ensure t is normal.
@@ -39,9 +42,29 @@ export default class MobXform {
 
     xform(z: Complex): Complex {
         // f(z) = e^(iϕ)(z + b)(b.compement()*z + 1)
-        const den = z.mulComp(this.b).add(Complex.one);
-        const num = this.b.add(z);
-        return num.div(den).mul(this.t);
+        //
+        // Used to do this like:
+        // const den = z.mulComp(this.b).add(Complex.one);
+        // const num = z.add(this.b);
+        // return num.div(den).mul(this.t);
+        // but it turns out to be ridiculously more performant to not do any
+        // intermediate allocations.  Thus the long manual calculation here.
+
+        // const den = z.mulComp(this.b).add(Complex.one);
+        const den_a = 1 + z.a * this.b.a + z.b * this.b.b;
+        const den_b = z.b * this.b.a - z.a * this.b.b;
+        // const num = z.add(this.b);
+        const num_a = this.b.a + z.a;
+        const num_b = this.b.b + z.b;
+        // return num.div(den).mul(this.t);
+        // first doing the num.div(den) quotient
+        const den_magSq_inv = 1.0/(den_a*den_a + den_b*den_b);
+        const q_a = (num_a * den_a + num_b * den_b)*den_magSq_inv;
+        const q_b = (num_b * den_a - num_a * den_b)*den_magSq_inv;
+        // now multiplying quotient by t
+        const tq_a = this.t.a * q_a - this.t.b*q_b;
+        const tq_b = this.t.b * q_a + this.t.a*q_b;
+        return new Complex(tq_a, tq_b);
     }
     // a.inverseMobXform(p) is a.invert().xform(p) but faster
     inverseXform(p: Complex): Complex {
@@ -65,6 +88,7 @@ export default class MobXform {
 
     /// TIER 1
 
+    static readonly identity: MobXform = new MobXform(Complex.zero, Complex.one);
     // returns xform q such that q.compose(this) == this.compose(q) == identity
     invert(): MobXform {
         // this sends 0 to t*b
@@ -120,7 +144,7 @@ export default class MobXform {
         // 0 = t(x + b)/(b_x + 1)
         /// we know |t| = 1 |b|<1 and |x|<1, so |b_x + 1| > 0 
         // so we just need to satisfy x + b = 0
-        const b = x.scale(-1);
+        const b = x.neg();
         // now need to find t.
         // 1 = t(y + b)/(yb_ + 1)
         // t = (yb_ + 1)/(y + b)
@@ -143,7 +167,8 @@ export default class MobXform {
     // let res = this.compose(other), then for all p
     // res.xform(p) == this.xform(other.xform(p))
     compose(other: MobXform): MobXform {
-        const p = this.xform(other.xform(Complex.zero));
+        // other.xform(zero) = other.t.mul(other.b);
+        const p = this.xform(other.t.mul(other.b)); 
         const q = this.xform(other.xform(Complex.one))
         return MobXform.fromZeroOne(p, q);
     }
@@ -177,10 +202,6 @@ export default class MobXform {
         // This implementation requires 3 seems awfully expensive.  compose() uses
         // four xform calls and a fromZeroOne.
         return tRes;
-    }
-    toString(): string {
-        const angle = Math.atan2(this.t.b, this.t.a);
-        return `rotate(${angle}).offset(${this.b})`;
     }
 }
 
