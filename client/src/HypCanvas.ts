@@ -5,6 +5,7 @@ import AffXform from "./AffXform";
 import DiskTurtle from "./DiskTurtle";
 import Fifo from "./Fifo";
 import { PointBag } from "./PointBag";
+import FrameStatus from "./FrameStatus";
 
 export type Drawer = {
     drawLine(x: Complex, y: Complex, strokeStyle?: string): void;
@@ -253,9 +254,7 @@ export default class HypCanvas {
     private diskToScreen: AffXform = AffXform.identity;
     private worldMap: WorldMap;
     private anchor: string;
-    private lastDrawTime: number = 0;
-    private drawTimesWeighted: number = 0;
-    private drawTimesWeight: number = 0;
+    private frameStatus: FrameStatus;
 
     get K() {
         return -1;
@@ -269,6 +268,8 @@ export default class HypCanvas {
         this.logger = (msg) => { /* nothing */ };
         this.worldMap = new Map();
         this.anchor = '';
+        this.frameStatus = new FrameStatus();
+        this.frameStatus.logger = (s: string) => { this.logger(s); };
         Object.seal(this);
     }
     postRedraw() {
@@ -459,7 +460,7 @@ export default class HypCanvas {
         this.postRedraw();
     }
     private draw() {
-        const start = new Date().getTime();
+        this.frameStatus.startFrame();
         const canvas = this.canvas;
         this.makeDiskToScreen();
         // console.log(canvas);
@@ -524,15 +525,9 @@ export default class HypCanvas {
             this.anchor = newAnchor;
         }
         const end = new Date().getTime();
-        const elapsed = end - start;
-        const drawPeriod = start - this.lastDrawTime;
-        this.drawTimesWeighted = DRAW_WEIGHT_EXP * this.drawTimesWeighted + elapsed;
-        this.drawTimesWeight = DRAW_WEIGHT_EXP * this.drawTimesWeight + 1;
 
-        this.lastDrawTime = start;
-        const weightedAvg = this.drawTimesWeighted / this.drawTimesWeight;
-        //this.logger(`fifoCount=${fifoCount} drawn.length=${drawn.length} elapsed=${elapsed}ms period=${drawPeriod} weighted=${weightedAvg}`);
         this.pendingRedraw = false;
+        this.frameStatus.endFrame();
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
     // r is the distance from the origin in the poincare metric.

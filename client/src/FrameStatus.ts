@@ -19,6 +19,7 @@ export default class FrameStatus {
         const now = new Date().getTime();
         const interval = now - this.frameStart;
         this.frameDurations.push(interval);
+        this.frameStart = undefined;
     }
     private clearInterval(): void {
         if (this.interval !== undefined) {
@@ -54,8 +55,10 @@ export default class FrameStatus {
             sum += d;
         }
         const nf = this.frameDurations.length;
-        const avg = sum / nf;
-        this.log(`frameStatus: ${nf} frames, avg ${avg}ms}`);
-        this.frameDurations = [];
+        if (nf > 0) {
+            const avg = sum / nf;
+            this.log(`frameStatus: ${nf} frames, avg ${avg}ms}`);
+            this.frameDurations = [];
+        }
     }
 }
