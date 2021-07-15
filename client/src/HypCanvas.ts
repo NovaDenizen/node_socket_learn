@@ -29,7 +29,6 @@ export type WorldMap = Map<string, Anchor>;
  * Implements a turtle graphics canvas for a hyperbolic space, based on the Poincare disk model.
  *
  * TODO: zoom
- * TODO: Model/view separation
  */
 
 // everything with squared magnitude bigger than this is considered an ideal point
@@ -90,10 +89,10 @@ class DiskRenderingContext {
         if (!img) {
             return;
         }
-        const SIZE = 60;
-        const sp = this.screened(this.viewed(p));
+        const vp = this.viewed(p);
+        const SIZE = 300*HypCanvas.metricScale(vp);
+        const sp = this.screened(vp);
         this.ctx().drawImage(img, sp.x - SIZE/2, sp.y - SIZE/2, SIZE, SIZE);
-        // TODO: Scale with metric.
         // TODO: Rotate with turtle?
         // TODO: Warp with projection?  Would require GL, textures, etc.
     }
@@ -532,7 +531,7 @@ export default class HypCanvas {
 
         this.lastDrawTime = start;
         const weightedAvg = this.drawTimesWeighted / this.drawTimesWeight;
-        this.logger(`fifoCount=${fifoCount} drawn.length=${drawn.length} elapsed=${elapsed}ms period=${drawPeriod} weighted=${weightedAvg}`);
+        //this.logger(`fifoCount=${fifoCount} drawn.length=${drawn.length} elapsed=${elapsed}ms period=${drawPeriod} weighted=${weightedAvg}`);
         this.pendingRedraw = false;
     }
     // takes a hyperbolic point in polar coordinates and xforms it into Poincare disk coordinate.
@@ -551,6 +550,9 @@ export default class HypCanvas {
         // if |z1| < 1 && |z2| < 1 then this is > 0
         const termDenominator = Complex.one.sub(z1.mul(z2.complement()));
         return 2*Math.atanh(termNumerator.mag() / termDenominator.mag());
+    }
+    static metricScale(z: Complex): number {
+        return (1 - z.magSq());
     }
     static origin_metric(z: Complex): number {
         return 2*Math.atanh(z.mag());
