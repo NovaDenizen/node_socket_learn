@@ -25,8 +25,8 @@ const cfg = new (class CFG {
         return path.join(this.CWD, dir);
     }
     httpsOptions(): object {
-        const key = fs.readFileSync(path.join(this.CERT_PATH, 'fullkeychain.pem'));
-        const cert = key;
+        const key = fs.readFileSync(path.join(this.CERT_PATH, 'privkey.pem'));
+        const cert = fs.readFileSync(path.join(this.CERT_PATH, 'cert.pem'));
         return { key, cert };
     }
 })()

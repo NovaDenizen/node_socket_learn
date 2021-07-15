@@ -1,5 +1,6 @@
 
 I set up letsencrypt and it generated these files.
 
+need to periodically copy the cert.pem and privkey.pem files from /etc/letsencrypt/live/www.cymbym.com because letsencrypt renews them.
 
 
