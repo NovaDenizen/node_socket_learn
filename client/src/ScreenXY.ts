@@ -6,7 +6,7 @@ export default class ScreenXY {
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
-        Object.freeze(this);
+        //Object.freeze(this);
     }
     toComplex(): Complex {
         return new Complex(this.x, this.y);

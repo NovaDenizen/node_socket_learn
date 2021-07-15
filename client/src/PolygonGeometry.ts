@@ -40,7 +40,7 @@ export class PolygonGeometry {
         // this uses a half-slice triangle, with angles sliceAngle/2, right, halfInternal
         this.edgeRadius = PolygonGeometry.triangleSideLength(halfInternal, this.sliceAngle/2, Math.PI/2);
 
-        Object.freeze(this);
+        //Object.freeze(this);
     }
     // Given triangle with angles alpha, beta, gamma, gives the length of
     // the side opposite alpha.

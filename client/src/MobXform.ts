@@ -36,7 +36,7 @@ export default class MobXform {
         // it's up to caller to ensure t is normal.
         // constructor is private.  So only have to ensure this file does it right.
         this.t = t; 
-        Object.freeze(this);
+        //Object.freeze(this);
     }
 
 

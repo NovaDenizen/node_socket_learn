@@ -22,7 +22,7 @@ export default class AffXform {
         this.d = d;
         this.e = e;
         this.f = f;
-        Object.freeze(this);
+        //Object.freeze(this);
     }
     xform(q: ScreenXY): ScreenXY {
         return new ScreenXY(this.a * q.x + this.b * q.y + this.c,

@@ -1,13 +1,15 @@
 export default class Complex {
     a: number;
     b: number;
-    constructor(a?: number, b?: number) {
+    constructor(a: number, b: number) {
         if (Number.isNaN(a) || Number.isNaN(b)) {
             throw new Error("NaN's loaded into Complex");
         }
-        this.a = a || 0;
-        this.b = b || 0;
-        Object.freeze(this);
+        this.a = a;
+        this.b = b;
+        // It turns out that I save 30ms/frame on my laptop with this disabled.  You would think this would
+        // make it faster.
+        //Object.freeze(this);
     }
     toString(): string {
         let bsign;

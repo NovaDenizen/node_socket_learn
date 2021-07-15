@@ -1,7 +1,7 @@
 
 
 export default class FrameStatus {
-    private _statusPeriodMs: number = 10000;
+    private _statusPeriodMs: number = 5000;
     private frameDurations: number[] = [];
     private frameStart: number | undefined = undefined;
     logger: ((s: string) => void) | undefined;

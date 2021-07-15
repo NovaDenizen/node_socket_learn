@@ -470,7 +470,7 @@ export default class HypCanvas {
         const drc = new DiskRenderingContext(this, canvas, this.view, this.diskToScreen);
         drc.clear();
         const d: Drawer = new DrawerProxy(drc);
-        Object.freeze(d);
+        //Object.freeze(d);
         //this.logger("setting up anchorfifo and drawn");
         //console.log("setting up anchorfifo and drawn");
         const anchorFifo: Fifo<[DiskTurtle, Anchor]> = new Fifo();
