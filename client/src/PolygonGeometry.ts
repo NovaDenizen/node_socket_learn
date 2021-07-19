@@ -1,16 +1,18 @@
 
 
+// Does the math to set up a tileable polygon in the hyperbolic plane.
+//
+// sides is the number of sides in the polyogn
+// order is the number of polygons that meet at each vertex.
 // edgeLength is length of each edge
 // vertexRadius is distance from vertex to center of polygon
-// edgeRadius is distance from center to center of edge
+// edgeRadius is distance from center to an edge's center
 // internalAngle is internal angle of polygon
 // externalAngle is external angle of polygon
 // A 'slice' is a triangle made from two consecutive vertices and the center.
 // A slice triangle has two edges of length vertexRadius and one of edgeLength.
 // sliceAngle is the angle of a slice triangle at the center point.
 // the other two angles of the slice are internalAngle/2.
-// sides is the number of sides in the polyogn
-// order is the number of polygons that meet at each vertex.
 export class PolygonGeometry {
     readonly edgeLength: number;
     readonly internalAngle: number;
@@ -29,6 +31,11 @@ export class PolygonGeometry {
         if (sides < 3) {
             throw new Error("not enough sides in PolygonGeometry constructor");
         }
+        // what if they specify, say, order-5 or order-6 triangles?  or order-3 hexagons?
+        // The right triangle formed by the center, a vertex, and an edge center has angles 
+        // PI/2, sliceangle/2, and intenalangle/2.  Triangles in the hyperbolic plane have angle sum <= PI.
+        // So sliceangle/2 + internalangle/2 must be <= PI/2,
+        // or sliceangle + internalAngle <= PI.
         if (this.internalAngle + this.sliceAngle >= Math.PI) {
             throw new Error("order is too small in PolygonGeometry constructor");
         }
