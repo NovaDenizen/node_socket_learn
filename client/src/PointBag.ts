@@ -7,7 +7,6 @@ export class Entry<T> {
     constructor(p: Complex, payload: T) {
         this.p = p;
         this.payload = payload;
-        //Object.freeze(this);
     }
 }
 

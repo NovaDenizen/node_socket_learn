@@ -7,9 +7,6 @@ export default class Complex {
         }
         this.a = a;
         this.b = b;
-        // It turns out that I save 30ms/frame on my laptop with this disabled.  You would think this would
-        // make it faster.
-        //Object.freeze(this);
     }
     toString(): string {
         let bsign;
